@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ATP-2025 Backtest</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#137fec",
+              "background-light": "#f6f7f8",
+              "background-dark": "#101922",
+              "container-light": "#ffffff",
+              "container-dark": "#182431",
+              "text-light": "#0d141b",
+              "text-dark": "#e7edf3",
+              "text-muted-light": "#4c739a",
+              "text-muted-dark": "#94a3b8",
+              "border-light": "#cfdbe7",
+              "border-dark": "#334155",
+              "success": "#28a745",
+              "danger": "#dc3545",
+            },
+            fontFamily: {
+              "display": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 24px;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark">
+<div class="relative flex min-h-screen w-full">
+<!-- SideNavBar -->
+<aside class="flex flex-col w-64 p-4 bg-container-light dark:bg-container-dark border-r border-border-light dark:border-border-dark">
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3 p-2">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="User profile picture" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAFze7NobeMnO041WerzsJCZUAG-o0IzMBRmwUgXfog-seQlwN68BsJjUO7lPZAZuNft5MTm6UYB6ZDjKupb-c3Xge2kxBu-Cx2aeicJqsyLsPitu7NHy8pDvpCr9rtKRxZJKZX_c0hSNvAtCyamH77Q3N7PPvIiUtSUWYzQSXVwXCDjPznvSeOGOQUV90AwrecuArea6NbVbE_G0deqCaCl9Vq7wRHOp3c6Hk-amV1cJWTnKzrJkVH5lCwEl-SE-K6sh4xmLK0rdLP");'></div>
+<div class="flex flex-col">
+<h1 class="text-text-light dark:text-text-dark text-base font-medium leading-normal">John Doe</h1>
+<p class="text-text-muted-light dark:text-text-muted-dark text-sm font-normal leading-normal">ATP-2025</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2 mt-4">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10" href="#">
+<span class="material-symbols-outlined text-text-light dark:text-text-dark">dashboard</span>
+<p class="text-text-light dark:text-text-dark text-sm font-medium leading-normal">Dashboard</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10" href="#">
+<span class="material-symbols-outlined text-text-light dark:text-text-dark">code</span>
+<p class="text-text-light dark:text-text-dark text-sm font-medium leading-normal">Strategies</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/20" href="#">
+<span class="material-symbols-outlined fill text-primary">history</span>
+<p class="text-primary text-sm font-medium leading-normal">Backtest</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10" href="#">
+<span class="material-symbols-outlined text-text-light dark:text-text-dark">trending_up</span>
+<p class="text-text-light dark:text-text-dark text-sm font-medium leading-normal">Live Trading</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10" href="#">
+<span class="material-symbols-outlined text-text-light dark:text-text-dark">settings</span>
+<p class="text-text-light dark:text-text-dark text-sm font-medium leading-normal">Settings</p>
+</a>
+</nav>
+</div>
+<div class="mt-auto flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10" href="#">
+<span class="material-symbols-outlined text-text-light dark:text-text-dark">logout</span>
+<p class="text-text-light dark:text-text-dark text-sm font-medium leading-normal">Logout</p>
+</a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 p-6 lg:p-10">
+<div class="mx-auto max-w-7xl">
+<!-- Page Heading -->
+<div class="mb-8">
+<h1 class="text-text-light dark:text-text-dark text-4xl font-black leading-tight tracking-[-0.033em]">Backtest</h1>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Configuration Form -->
+<div class="lg:col-span-1">
+<div class="bg-container-light dark:bg-container-dark rounded-xl shadow-sm p-6">
+<h2 class="text-xl font-bold text-text-light dark:text-text-dark mb-6">Configuration</h2>
+<form class="flex flex-col gap-6">
+<!-- Strategy -->
+<label class="flex flex-col">
+<p class="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Strategy</p>
+<select class="form-select w-full rounded-lg text-text-light dark:text-text-dark bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark focus:ring-primary focus:border-primary h-12 text-base font-normal leading-normal">
+<option>Momentum Crossover</option>
+<option>Mean Reversion</option>
+<option>Arbitrage Strategy</option>
+</select>
+</label>
+<!-- Instruments -->
+<div>
+<p class="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Instruments</p>
+<div class="w-full rounded-lg border border-border-light dark:border-border-dark p-2 flex flex-wrap gap-2">
+<div class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-primary/20 pl-3 pr-2">
+<p class="text-text-light dark:text-text-dark text-sm font-medium leading-normal">AAPL</p>
+<button type="button"><span class="material-symbols-outlined !text-base">close</span></button>
+</div>
+<div class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-primary/20 pl-3 pr-2">
+<p class="text-text-light dark:text-text-dark text-sm font-medium leading-normal">GOOGL</p>
+<button type="button"><span class="material-symbols-outlined !text-base">close</span></button>
+</div>
+<input class="flex-1 bg-transparent border-none focus:ring-0 min-w-[100px] text-text-light dark:text-text-dark placeholder:text-text-muted-light dark:placeholder:text-text-muted-dark" placeholder="Add symbol..." type="text"/>
+</div>
+</div>
+<!-- Date Range -->
+<div class="grid grid-cols-2 gap-4">
+<label class="flex flex-col">
+<p class="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Start Date</p>
+<input class="form-input w-full rounded-lg text-text-light dark:text-text-dark bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark focus:ring-primary focus:border-primary h-12 text-base font-normal leading-normal" type="date" value="2023-01-01"/>
+</label>
+<label class="flex flex-col">
+<p class="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">End Date</p>
+<input class="form-input w-full rounded-lg text-text-light dark:text-text-dark bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark focus:ring-primary focus:border-primary h-12 text-base font-normal leading-normal" type="date" value="2024-01-01"/>
+</label>
+</div>
+<!-- Financial Inputs -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<label class="flex flex-col">
+<p class="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Initial Capital</p>
+<input class="form-input w-full rounded-lg text-text-light dark:text-text-dark bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark focus:ring-primary focus:border-primary h-12 text-base font-normal leading-normal" type="number" value="100000"/>
+</label>
+<label class="flex flex-col">
+<p class="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Commission (%)</p>
+<input class="form-input w-full rounded-lg text-text-light dark:text-text-dark bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark focus:ring-primary focus:border-primary h-12 text-base font-normal leading-normal" step="0.01" type="number" value="0.1"/>
+</label>
+<label class="flex flex-col">
+<p class="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Slippage (%)</p>
+<input class="form-input w-full rounded-lg text-text-light dark:text-text-dark bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark focus:ring-primary focus:border-primary h-12 text-base font-normal leading-normal" step="0.01" type="number" value="0.05"/>
+</label>
+</div>
+<!-- Action Buttons -->
+<div class="flex items-center gap-4 mt-4">
+<button class="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold py-3 px-4 rounded-lg transition-colors" type="submit">
+<span class="material-symbols-outlined">play_arrow</span>
+                                    Run Backtest
+                                </button>
+<button class="w-auto flex items-center justify-center bg-transparent text-text-muted-light dark:text-text-muted-dark hover:text-text-light dark:hover:text-text-dark font-medium py-3 px-4 rounded-lg transition-colors" type="reset">Reset</button>
+</div>
+</form>
+</div>
+</div>
+<!-- Results View -->
+<div class="lg:col-span-2">
+<div class="bg-container-light dark:bg-container-dark rounded-xl shadow-sm p-6 min-h-full">
+<h2 class="text-xl font-bold text-text-light dark:text-text-dark mb-6">Results</h2>
+<!-- Metric Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+<div class="p-4 rounded-lg bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark">
+<p class="text-sm font-medium text-text-muted-light dark:text-text-muted-dark mb-1">Total Return</p>
+<p class="text-2xl font-bold text-success">+34.56%</p>
+</div>
+<div class="p-4 rounded-lg bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark">
+<p class="text-sm font-medium text-text-muted-light dark:text-text-muted-dark mb-1">Sharpe Ratio</p>
+<p class="text-2xl font-bold text-text-light dark:text-text-dark">1.82</p>
+</div>
+<div class="p-4 rounded-lg bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark">
+<p class="text-sm font-medium text-text-muted-light dark:text-text-muted-dark mb-1">Max Drawdown</p>
+<p class="text-2xl font-bold text-danger">-8.12%</p>
+</div>
+</div>
+<!-- Equity Curve Chart -->
+<div class="mb-8">
+<p class="text-lg font-semibold text-text-light dark:text-text-dark mb-4">Equity Curve</p>
+<div class="w-full h-80 bg-background-light dark:bg-background-dark rounded-lg flex items-center justify-center border border-border-light dark:border-border-dark">
+<img class="w-full h-full object-cover rounded-lg" data-alt="Line chart showing the portfolio's equity curve over time, indicating growth." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMVZWRNUb5BgxV9aFC1XOEj_SH6J_kwT8eT4gHsU2XJD2GEWUDmZgWGXQCS5wH1a9uYpEE6bSi5tHWi_JzIARadeGcC1WXj7hiYDMT8XCPJq5b8ducTYqn407CQgm3rJlaDqKt3tLPYOmpjG_YB5E8uT8K5vw2E_MMesqFpQhQTrDTYTMTRxIg59qQceORMbm8beefadji0HjyCDd3Pvi4tZ7HyAZ48zAFyVg0tD2fIzpqA-WwFasV9TkQmE_OmqesUcvmQ_5jRUqc"/>
+</div>
+</div>
+<!-- Trade Statistics -->
+<div>
+<p class="text-lg font-semibold text-text-light dark:text-text-dark mb-4">Trade Statistics</p>
+<div class="divide-y divide-border-light dark:divide-border-dark border-t border-b border-border-light dark:border-border-dark">
+<div class="flex justify-between items-center py-3 px-2">
+<p class="text-sm text-text-muted-light dark:text-text-muted-dark">Total Trades</p>
+<p class="text-sm font-semibold text-text-light dark:text-text-dark">152</p>
+</div>
+<div class="flex justify-between items-center py-3 px-2">
+<p class="text-sm text-text-muted-light dark:text-text-muted-dark">Win Rate</p>
+<p class="text-sm font-semibold text-success">68.42%</p>
+</div>
+<div class="flex justify-between items-center py-3 px-2">
+<p class="text-sm text-text-muted-light dark:text-text-muted-dark">Profit Factor</p>
+<p class="text-sm font-semibold text-success">2.45</p>
+</div>
+<div class="flex justify-between items-center py-3 px-2">
+<p class="text-sm text-text-muted-light dark:text-text-muted-dark">Average Trade Duration</p>
+<p class="text-sm font-semibold text-text-light dark:text-text-dark">3.2 days</p>
+</div>
+<div class="flex justify-between items-center py-3 px-2">
+<p class="text-sm text-text-muted-light dark:text-text-muted-dark">Avg. Winning Trade</p>
+<p class="text-sm font-semibold text-success">+$450.21</p>
+</div>
+<div class="flex justify-between items-center py-3 px-2">
+<p class="text-sm text-text-muted-light dark:text-text-muted-dark">Avg. Losing Trade</p>
+<p class="text-sm font-semibold text-danger">-$183.76</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

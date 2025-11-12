@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ATP-2025 Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 24px;
+        }
+        .material-symbols-outlined.fill {
+             font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-800 dark:text-slate-200">
+<div class="flex min-h-screen w-full">
+<!-- SideNavBar -->
+<aside class="flex w-64 flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3 px-2">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="ATP-2025 platform logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD7whzJBQDZ-mDmWkUiFiru52i675OjIFuLjCBL19kCfSU2Oj3TqmaudjOlEhqKI4cYm9WWrG3WCC8MjGkKb52cUAwsPa9hjEi2MfYJP0PvwCJ-4ZoaNiTGrJJTKaXBS59pcVG1sTS-mQnHBxaT8ODKPkJzufv5zCAl56KUYVZbg77wkip_iJGzu60FLuGftqQZilLiQl9q7FNWSvXcSBX_mkTJR-R5fXZ9DVemEWUsh2uBkHdcSNHp6UJ5e_iUxTSZrCAwhUhXn2ad");'></div>
+<div class="flex flex-col">
+<h1 class="text-[#0d141b] dark:text-white text-base font-medium leading-normal">ATP-2025</h1>
+<p class="text-[#4c739a] dark:text-slate-400 text-sm font-normal leading-normal">Trading Platform</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2 mt-4">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 dark:bg-primary/20" href="#">
+<span class="material-symbols-outlined fill text-primary">person</span>
+<p class="text-primary text-sm font-medium leading-normal">Account</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined text-[#0d141b] dark:text-slate-300">link</span>
+<p class="text-[#0d141b] dark:text-slate-300 text-sm font-medium leading-normal">Brokers</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined text-[#0d141b] dark:text-slate-300">shield</span>
+<p class="text-[#0d141b] dark:text-slate-300 text-sm font-medium leading-normal">Risk</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined text-[#0d141b] dark:text-slate-300">notifications</span>
+<p class="text-[#0d141b] dark:text-slate-300 text-sm font-medium leading-normal">Notifications</p>
+</a>
+</nav>
+</div>
+<div class="mt-auto flex flex-col gap-4">
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined text-[#0d141b] dark:text-slate-300">help</span>
+<p class="text-[#0d141b] dark:text-slate-300 text-sm font-medium leading-normal">Help</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined text-[#0d141b] dark:text-slate-300">settings</span>
+<p class="text-[#0d141b] dark:text-slate-300 text-sm font-medium leading-normal">Settings</p>
+</a>
+</div>
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-200 text-sm font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">Logout</span>
+</button>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 p-8 overflow-y-auto">
+<div class="max-w-4xl mx-auto">
+<!-- Section 1: Account Settings -->
+<section id="account-settings">
+<!-- PageHeading -->
+<div class="flex flex-wrap justify-between gap-3 mb-6">
+<div class="flex min-w-72 flex-col gap-2">
+<p class="text-[#0d141b] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">Account Settings</p>
+<p class="text-[#4c739a] dark:text-slate-400 text-base font-normal leading-normal">Manage your profile, password, and two-factor authentication.</p>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
+<!-- TextField -->
+<div class="flex max-w-full flex-wrap items-end gap-6 p-6">
+<label class="flex flex-col min-w-40 flex-1">
+<p class="text-[#0d141b] dark:text-slate-200 text-sm font-medium leading-normal pb-2">Username</p>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-400 dark:text-slate-500 focus:outline-0 focus:ring-0 border border-[#cfdbe7] dark:border-slate-700 bg-slate-100 dark:bg-slate-800 h-12 p-[15px] text-base font-normal leading-normal cursor-not-allowed" readonly="" value="trader_jane"/>
+</label>
+<label class="flex flex-col min-w-40 flex-1">
+<p class="text-[#0d141b] dark:text-slate-200 text-sm font-medium leading-normal pb-2">Email</p>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d141b] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-[#cfdbe7] dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary h-12 placeholder:text-[#4c739a] p-[15px] text-base font-normal leading-normal" value="jane.doe@example.com"/>
+</label>
+</div>
+<!-- ListItem -->
+<div class="border-t border-slate-200 dark:border-slate-800 p-6">
+<div class="flex items-center gap-4 justify-between">
+<div class="flex items-center gap-4">
+<div class="text-primary flex items-center justify-center rounded-lg bg-primary/10 dark:bg-primary/20 shrink-0 size-12">
+<span class="material-symbols-outlined">shield_lock</span>
+</div>
+<div class="flex flex-col justify-center">
+<p class="text-[#0d141b] dark:text-white text-base font-medium leading-normal line-clamp-1">Two-Factor Authentication</p>
+<p class="text-green-600 dark:text-green-500 text-sm font-normal leading-normal line-clamp-2">2FA is currently active on your account.</p>
+</div>
+</div>
+<div class="shrink-0">
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-slate-200 dark:bg-slate-800 text-[#0d141b] dark:text-slate-200 text-sm font-medium leading-normal w-fit">
+<span class="truncate">Manage 2FA</span>
+</button>
+</div>
+</div>
+</div>
+<!-- ButtonGroup -->
+<div class="flex justify-end border-t border-slate-200 dark:border-slate-800 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-b-xl">
+<div class="flex flex-1 gap-3 flex-wrap justify-end">
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-slate-200 dark:bg-slate-800 text-[#0d141b] dark:text-slate-200 text-sm font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">Change Password</span>
+</button>
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">Save Changes</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: Broker Connections -->
+<section class="mt-12" id="broker-connections">
+<div class="flex flex-wrap justify-between items-center gap-3 mb-6">
+<div class="flex min-w-72 flex-col gap-2">
+<p class="text-[#0d141b] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">Broker Connections</p>
+<p class="text-[#4c739a] dark:text-slate-400 text-base font-normal leading-normal">Connect and manage your trading accounts from various brokers.</p>
+</div>
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] gap-2">
+<span class="material-symbols-outlined text-base">add</span>
+<span class="truncate">Add New Broker</span>
+</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Broker Card 1 -->
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<img class="rounded-full size-10" data-alt="Zerodha logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXqucDr7qK0ut1ijGXYxHN0T4_fJk7-tswl6CD63Q4X4mx_-RQRlEbNNCOpjRIPiilL5hUM8fKjnN1w2FJC1LnKcjqFR-arExHtifNh7AuCBn4yNn2odjIhnWE7g6wY-K0S31PAubU4SAGMsRgIguy_IiSyiCOXgVj9Zd7NL4dRjGtBMDsIEx2-ngiH3bd-t3ryGaozZ6EJNl2m4hfOmvDSCCsLUhG7jgsYMApevfgV5FLBjIorhx1z1spZfa_CZRwF88LLmyE9azP"/>
+<h3 class="font-bold text-lg text-slate-800 dark:text-slate-100">Zerodha Kite</h3>
+</div>
+<span class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/50 px-3 py-1 text-xs font-medium text-green-700 dark:text-green-400">✅ Connected</span>
+</div>
+<div class="space-y-2 text-sm">
+<p><span class="font-medium text-slate-500 dark:text-slate-400">API Key:</span> <span class="font-mono">AB***XYZ</span></p>
+<p><span class="font-medium text-slate-500 dark:text-slate-400">Access Token:</span> <span class="text-green-600 dark:text-green-500">Active</span></p>
+<p><span class="font-medium text-slate-500 dark:text-slate-400">Algo ID:</span> <span class="font-mono">Z-12345</span></p>
+</div>
+<div class="flex gap-2 mt-2">
+<button class="flex-1 text-center cursor-pointer rounded-lg h-9 px-4 bg-slate-200 dark:bg-slate-800 text-[#0d141b] dark:text-slate-200 text-xs font-medium">Update Keys</button>
+<button class="flex-1 text-center cursor-pointer rounded-lg h-9 px-4 bg-slate-200 dark:bg-slate-800 text-[#0d141b] dark:text-slate-200 text-xs font-medium">Reconnect</button>
+<button class="flex-1 text-center cursor-pointer rounded-lg h-9 px-4 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-medium">Revoke</button>
+</div>
+</div>
+<!-- Broker Card 2 -->
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<img class="rounded-full size-10" data-alt="Upstox logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAd_YXKit5X3FyBFdGuAV_qHDYEKeM6g6rKtg66q5Px2aXPP_nAzmb5FWXm2OQHlRIpqBPtl3zPqmPQgvc1Te6d2XwkaPa7B9F47JLbEZN1S1UqeqArdIk308LS7zwv8LJfCNg1xPykAnMPQw48lYsY23NPwe4oP1N9-ScQ1c7-4XxB8QaLu7-r8BVEtUh-zXkpEi8AXljMrFt9wsEogxZKwfECIfFHAJfC06VqKFs7uzUAZwUvLaXOhiXMrBKjBi4T-KZV6nx29wo6"/>
+<h3 class="font-bold text-lg text-slate-800 dark:text-slate-100">Upstox Pro</h3>
+</div>
+<span class="inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/50 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-400">⚠️ Disconnected</span>
+</div>
+<div class="space-y-2 text-sm">
+<p><span class="font-medium text-slate-500 dark:text-slate-400">API Key:</span> <span class="font-mono">CD***UVW</span></p>
+<p><span class="font-medium text-slate-500 dark:text-slate-400">Access Token:</span> <span class="text-red-600 dark:text-red-500">Expired</span></p>
+<p><span class="font-medium text-slate-500 dark:text-slate-400">Algo ID:</span> <span class="font-mono">U-67890</span></p>
+</div>
+<div class="flex gap-2 mt-2">
+<button class="flex-1 text-center cursor-pointer rounded-lg h-9 px-4 bg-slate-200 dark:bg-slate-800 text-[#0d141b] dark:text-slate-200 text-xs font-medium">Update Keys</button>
+<button class="flex-1 text-center cursor-pointer rounded-lg h-9 px-4 bg-primary/20 dark:bg-primary/30 text-primary dark:text-primary-300 text-xs font-bold">Reconnect</button>
+<button class="flex-1 text-center cursor-pointer rounded-lg h-9 px-4 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-medium">Revoke</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 3: Risk Management -->
+<section class="mt-12" id="risk-management">
+<div class="flex flex-wrap justify-between gap-3 mb-6">
+<div class="flex min-w-72 flex-col gap-2">
+<p class="text-[#0d141b] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">Risk Management</p>
+<p class="text-[#4c739a] dark:text-slate-400 text-base font-normal leading-normal">Set global risk parameters to protect your capital.</p>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
+<label class="flex flex-col">
+<p class="text-[#0d141b] dark:text-slate-200 text-sm font-medium leading-normal pb-2">Max Position Size ($)</p>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d141b] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-[#cfdbe7] dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary h-12 placeholder:text-[#4c739a] p-[15px] text-base font-normal leading-normal" type="number" value="10000"/>
+</label>
+<label class="flex flex-col">
+<p class="text-[#0d141b] dark:text-slate-200 text-sm font-medium leading-normal pb-2">Max Daily Loss (%)</p>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d141b] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-[#cfdbe7] dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary h-12 placeholder:text-[#4c739a] p-[15px] text-base font-normal leading-normal" type="number" value="2"/>
+</label>
+<label class="flex flex-col">
+<p class="text-[#0d141b] dark:text-slate-200 text-sm font-medium leading-normal pb-2">Max Daily Trades</p>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d141b] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-[#cfdbe7] dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary h-12 placeholder:text-[#4c739a] p-[15px] text-base font-normal leading-normal" type="number" value="50"/>
+</label>
+</div>
+<div class="flex justify-end border-t border-slate-200 dark:border-slate-800 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-b-xl">
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">Save Risk Settings</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Section 4: Notifications -->
+<section class="mt-12" id="notifications">
+<div class="flex flex-wrap justify-between gap-3 mb-6">
+<div class="flex min-w-72 flex-col gap-2">
+<p class="text-[#0d141b] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">Notifications</p>
+<p class="text-[#4c739a] dark:text-slate-400 text-base font-normal leading-normal">Configure your alerts across different channels.</p>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
+<div class="overflow-x-auto">
+<table class="w-full text-sm text-left">
+<thead class="text-xs text-slate-500 dark:text-slate-400 uppercase bg-slate-50 dark:bg-slate-800/50">
+<tr>
+<th class="px-6 py-3" scope="col">Alert Type</th>
+<th class="px-6 py-3 text-center" scope="col">Email</th>
+<th class="px-6 py-3 text-center" scope="col">SMS</th>
+<th class="px-6 py-3 text-center" scope="col">Telegram</th>
+</tr>
+</thead>
+<tbody>
+<tr class="border-b dark:border-slate-800">
+<th class="px-6 py-4 font-medium text-slate-900 dark:text-white whitespace-nowrap" scope="row">Order Fills</th>
+<td class="px-6 py-4 text-center"><input checked="" class="form-checkbox rounded text-primary focus:ring-primary/50" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input class="form-checkbox rounded text-primary focus:ring-primary/50" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input checked="" class="form-checkbox rounded text-primary focus:ring-primary/50" type="checkbox"/></td>
+</tr>
+<tr class="border-b dark:border-slate-800">
+<th class="px-6 py-4 font-medium text-slate-900 dark:text-white whitespace-nowrap" scope="row">Strategy Errors</th>
+<td class="px-6 py-4 text-center"><input checked="" class="form-checkbox rounded text-primary focus:ring-primary/50" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input checked="" class="form-checkbox rounded text-primary focus:ring-primary/50" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input class="form-checkbox rounded text-primary focus:ring-primary/50" type="checkbox"/></td>
+</tr>
+<tr>
+<th class="px-6 py-4 font-medium text-slate-900 dark:text-white whitespace-nowrap" scope="row">Risk Breaches</th>
+<td class="px-6 py-4 text-center"><input checked="" class="form-checkbox rounded text-primary focus:ring-primary/50" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input checked="" class="form-checkbox rounded text-primary focus:ring-primary/50" type="checkbox"/></td>
+<td class="px-6 py-4 text-center"><input checked="" class="form-checkbox rounded text-primary focus:ring-primary/50" type="checkbox"/></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="flex justify-end border-t border-slate-200 dark:border-slate-800 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-b-xl">
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">Save Notifications</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</body></html>

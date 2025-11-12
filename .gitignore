@@ -51,3 +51,9 @@ Thumbs.db
 # Generated data
 backtest_results/
 data/tmp/
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env*.local

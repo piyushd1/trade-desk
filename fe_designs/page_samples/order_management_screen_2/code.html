@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Orders - ATP-2025</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#0052CC",
+              "background-light": "#F4F5F7",
+              "background-dark": "#101922",
+              "text-dark": "#172B4D",
+              "success": "#36B37E",
+              "warning": "#0065FF",
+              "error": "#DE350B"
+            },
+            fontFamily: {
+              "display": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+<div class="layout-container flex h-full grow flex-col">
+<div class="flex flex-1 justify-center py-5 lg:px-10">
+<div class="layout-content-container flex flex-col w-full max-w-screen-xl flex-1">
+<div class="flex flex-wrap justify-between items-center gap-4 p-4">
+<div class="flex min-w-72 flex-col gap-1">
+<h1 class="text-text-dark dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">Orders</h1>
+<p class="text-gray-500 dark:text-gray-400 text-base font-normal leading-normal">Monitor and manage your trading activity.</p>
+</div>
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">Place Order</span>
+</button>
+</div>
+<div class="flex gap-3 p-4 overflow-x-auto">
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-background-dark dark:border dark:border-gray-700 pl-4 pr-3 shadow-sm">
+<p class="text-text-dark dark:text-gray-300 text-sm font-medium leading-normal">Date Range</p>
+<span class="material-symbols-outlined text-text-dark dark:text-gray-300 text-xl">expand_more</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-background-dark dark:border dark:border-gray-700 pl-4 pr-3 shadow-sm">
+<p class="text-text-dark dark:text-gray-300 text-sm font-medium leading-normal">Status</p>
+<span class="material-symbols-outlined text-text-dark dark:text-gray-300 text-xl">expand_more</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-background-dark dark:border dark:border-gray-700 pl-4 pr-3 shadow-sm">
+<p class="text-text-dark dark:text-gray-300 text-sm font-medium leading-normal">Strategy</p>
+<span class="material-symbols-outlined text-text-dark dark:text-gray-300 text-xl">expand_more</span>
+</button>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-10 gap-6 p-4">
+<div class="lg:col-span-7">
+<div class="@container bg-white dark:bg-background-dark rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
+<div class="flex overflow-hidden rounded-xl">
+<table class="w-full">
+<thead>
+<tr class="border-b border-b-gray-200 dark:border-b-gray-800">
+<th class="px-4 py-3 text-left text-text-dark dark:text-gray-400 w-[15%] text-xs font-medium uppercase tracking-wider">Time</th>
+<th class="px-4 py-3 text-left text-text-dark dark:text-gray-400 w-[10%] text-xs font-medium uppercase tracking-wider">ID</th>
+<th class="px-4 py-3 text-left text-text-dark dark:text-gray-400 w-[10%] text-xs font-medium uppercase tracking-wider">Symbol</th>
+<th class="px-4 py-3 text-left text-text-dark dark:text-gray-400 w-[10%] text-xs font-medium uppercase tracking-wider">Side</th>
+<th class="px-4 py-3 text-left text-text-dark dark:text-gray-400 w-[10%] text-xs font-medium uppercase tracking-wider">Qty</th>
+<th class="px-4 py-3 text-left text-text-dark dark:text-gray-400 w-[10%] text-xs font-medium uppercase tracking-wider">Type</th>
+<th class="px-4 py-3 text-left text-text-dark dark:text-gray-400 w-[10%] text-xs font-medium uppercase tracking-wider">Price</th>
+<th class="px-4 py-3 text-left text-text-dark dark:text-gray-400 w-[15%] text-xs font-medium uppercase tracking-wider">Status</th>
+<th class="px-4 py-3 text-left text-text-dark dark:text-gray-400 w-[10%] text-xs font-medium uppercase tracking-wider">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">10:45:12</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">ORD-001</td>
+<td class="h-[60px] px-4 py-2 text-text-dark dark:text-white text-sm font-medium">AAPL</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">BUY</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">100</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">LIMIT</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">172.50</td>
+<td class="h-[60px] px-4 py-2 text-sm font-normal">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success/20 text-success">COMPLETE</span>
+</td>
+<td class="h-[60px] px-4 py-2 text-sm font-normal"></td>
+</tr>
+<tr class="bg-primary/10 dark:bg-primary/20 hover:bg-primary/20 dark:hover:bg-primary/30 cursor-pointer">
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">10:39:05</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">ORD-003</td>
+<td class="h-[60px] px-4 py-2 text-text-dark dark:text-white text-sm font-medium">TSLA</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">BUY</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">200</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">LIMIT</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">255.00</td>
+<td class="h-[60px] px-4 py-2 text-sm font-normal">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning/20 text-warning">OPEN</span>
+</td>
+<td class="h-[60px] px-4 py-2 text-sm font-normal">
+<div class="flex items-center gap-2">
+<button class="flex h-8 w-8 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700" title="Modify Order">
+<span class="material-symbols-outlined text-xl">edit</span>
+</button>
+<button class="flex h-8 w-8 items-center justify-center rounded-md text-error hover:bg-error/10" title="Cancel Order">
+<span class="material-symbols-outlined text-xl">cancel</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">10:35:18</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">ORD-004</td>
+<td class="h-[60px] px-4 py-2 text-text-dark dark:text-white text-sm font-medium">MSFT</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">BUY</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">75</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">LIMIT</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">330.00</td>
+<td class="h-[60px] px-4 py-2 text-sm font-normal">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-error/20 text-error">REJECTED</span>
+</td>
+<td class="h-[60px] px-4 py-2 text-sm font-normal"></td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">10:31:45</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">ORD-005</td>
+<td class="h-[60px] px-4 py-2 text-text-dark dark:text-white text-sm font-medium">AMZN</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">SELL</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">100</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">MARKET</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">135.25</td>
+<td class="h-[60px] px-4 py-2 text-sm font-normal">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success/20 text-success">COMPLETE</span>
+</td>
+<td class="h-[60px] px-4 py-2 text-sm font-normal"></td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">10:42:30</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">ORD-002</td>
+<td class="h-[60px] px-4 py-2 text-text-dark dark:text-white text-sm font-medium">GOOGL</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">SELL</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">50</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">MARKET</td>
+<td class="h-[60px] px-4 py-2 text-gray-600 dark:text-gray-400 text-sm font-normal">140.10</td>
+<td class="h-[60px] px-4 py-2 text-sm font-normal">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success/20 text-success">COMPLETE</span>
+</td>
+<td class="h-[60px] px-4 py-2 text-sm font-normal"></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="lg:col-span-3">
+<div class="bg-white dark:bg-background-dark rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 sticky top-5">
+<h2 class="text-text-dark dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5 border-b border-b-gray-200 dark:border-b-gray-800">Order Details</h2>
+<div class="p-4">
+<div class="grid grid-cols-[35%_1fr] gap-x-4">
+<div class="col-span-2 grid grid-cols-subgrid border-b border-b-gray-200 dark:border-b-gray-800 py-3">
+<p class="text-gray-500 dark:text-gray-400 text-sm font-normal">Order ID</p>
+<p class="text-text-dark dark:text-white text-sm font-medium">ORD-003</p>
+</div>
+<div class="col-span-2 grid grid-cols-subgrid border-b border-b-gray-200 dark:border-b-gray-800 py-3">
+<p class="text-gray-500 dark:text-gray-400 text-sm font-normal">Symbol</p>
+<p class="text-text-dark dark:text-white text-sm font-medium">TSLA</p>
+</div>
+<div class="col-span-2 grid grid-cols-subgrid border-b border-b-gray-200 dark:border-b-gray-800 py-3">
+<p class="text-gray-500 dark:text-gray-400 text-sm font-normal">Status</p>
+<p class="text-text-dark dark:text-white text-sm font-medium flex items-center gap-2">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning/20 text-warning">OPEN</span>
+</p>
+</div>
+<div class="col-span-2 grid grid-cols-subgrid border-b border-b-gray-200 dark:border-b-gray-800 py-3">
+<p class="text-gray-500 dark:text-gray-400 text-sm font-normal">Side</p>
+<p class="text-text-dark dark:text-white text-sm font-medium">BUY</p>
+</div>
+<div class="col-span-2 grid grid-cols-subgrid border-b border-b-gray-200 dark:border-b-gray-800 py-3">
+<p class="text-gray-500 dark:text-gray-400 text-sm font-normal">Quantity</p>
+<p class="text-text-dark dark:text-white text-sm font-medium">200</p>
+</div>
+<div class="col-span-2 grid grid-cols-subgrid border-b border-b-gray-200 dark:border-b-gray-800 py-3">
+<p class="text-gray-500 dark:text-gray-400 text-sm font-normal">Order Type</p>
+<p class="text-text-dark dark:text-white text-sm font-medium">LIMIT</p>
+</div>
+<div class="col-span-2 grid grid-cols-subgrid border-b border-b-gray-200 dark:border-b-gray-800 py-3">
+<p class="text-gray-500 dark:text-gray-400 text-sm font-normal">Limit Price</p>
+<p class="text-text-dark dark:text-white text-sm font-medium">255.00</p>
+</div>
+<div class="col-span-2 grid grid-cols-subgrid border-b border-b-gray-200 dark:border-b-gray-800 py-3">
+<p class="text-gray-500 dark:text-gray-400 text-sm font-normal">Placed At</p>
+<p class="text-text-dark dark:text-white text-sm font-medium">2023-10-27 10:39:05</p>
+</div>
+<div class="col-span-2 grid grid-cols-subgrid py-3">
+<p class="text-gray-500 dark:text-gray-400 text-sm font-normal">Strategy</p>
+<p class="text-text-dark dark:text-white text-sm font-medium">Momentum-01</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body></html>

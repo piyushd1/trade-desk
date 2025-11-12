@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ATP-2025 - Strategies</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "success": "#28A745",
+                        "danger": "#DC3545",
+                        "warning": "#FFC107",
+                        "surface-light": "#FFFFFF",
+                        "surface-dark": "#182431",
+                        "text-primary-light": "#212529",
+                        "text-primary-dark": "#f1f3f5",
+                        "text-secondary-light": "#6C757D",
+                        "text-secondary-dark": "#aeb5bc",
+                        "border-light": "#DEE2E6",
+                        "border-dark": "#36414a",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-text-primary-light dark:text-text-primary-dark">
+<div class="flex min-h-screen">
+<aside class="flex-shrink-0 w-64 bg-surface-light dark:bg-surface-dark border-r border-border-light dark:border-border-dark p-4 flex flex-col justify-between">
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="ATP-2025 company logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDY11qn7RsGezgODoGjM9mRJh3IO6NFzR30O1vGE5e-V6lVOyTGgj9vVXuYmhJSqlrgNFiDPkMUJWWNcXyy8E_4iPWbI7VqoVhGy9WxAvwRJCH0BoKzY-21MwB8MZcP_XZA7bKBZBixVQ674xAz-hZ0yPrzsNct8opSY_IYYQjzWgALUZvqLCmGHgGn1Zxjg1-FpwQ7EamBXRQnhHpV7wr0I-z-_va1tGztAku6ARDxH9SPmAngAAho9wcaNJcuCJgYYKh0Bpl_ArUR");'></div>
+<div class="flex flex-col">
+<h1 class="text-text-primary-light dark:text-text-primary-dark text-base font-bold leading-normal">ATP-2025</h1>
+<p class="text-text-secondary-light dark:text-text-secondary-dark text-sm font-normal leading-normal truncate">user@email.com</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2 mt-4">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 transition-colors" href="#">
+<span class="material-symbols-outlined text-text-secondary-light dark:text-text-secondary-dark">dashboard</span>
+<p class="text-sm font-medium">Dashboard</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary" href="#">
+<span class="material-symbols-outlined !font-bold">bolt</span>
+<p class="text-sm font-bold">Strategies</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 transition-colors" href="#">
+<span class="material-symbols-outlined text-text-secondary-light dark:text-text-secondary-dark">candlestick_chart</span>
+<p class="text-sm font-medium">Backtest</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 transition-colors" href="#">
+<span class="material-symbols-outlined text-text-secondary-light dark:text-text-secondary-dark">history</span>
+<p class="text-sm font-medium">Trade History</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 transition-colors" href="#">
+<span class="material-symbols-outlined text-text-secondary-light dark:text-text-secondary-dark">signal_cellular_alt</span>
+<p class="text-sm font-medium">Live Trading</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 transition-colors" href="#">
+<span class="material-symbols-outlined text-text-secondary-light dark:text-text-secondary-dark">settings</span>
+<p class="text-sm font-medium">Settings</p>
+</a>
+</nav>
+</div>
+<button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90 transition-colors">
+<span class="truncate">Upgrade Plan</span>
+</button>
+</aside>
+<main class="flex-1 p-6 lg:p-10">
+<div class="mx-auto max-w-7xl">
+<header class="flex flex-wrap justify-between items-center gap-4 mb-8">
+<h1 class="text-4xl font-black leading-tight tracking-[-0.033em]">Strategies</h1>
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90 transition-colors">
+<span class="material-symbols-outlined !text-xl">add</span>
+<span class="truncate">New Strategy</span>
+</button>
+</header>
+<div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+<div class="flex flex-col rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark shadow-sm hover:shadow-lg transition-shadow duration-300">
+<div class="p-5 border-b border-border-light dark:border-border-dark flex justify-between items-start gap-4">
+<h2 class="text-lg font-bold">EMA Crossover Strategy</h2>
+<div class="flex-shrink-0 text-xs font-bold py-1 px-2.5 rounded-full bg-success/10 text-success flex items-center gap-1.5">
+<span class="w-2 h-2 bg-success rounded-full"></span>
+                        Running
+                    </div>
+</div>
+<div class="p-5 flex-grow">
+<p class="text-sm text-text-secondary-light dark:text-text-secondary-dark mb-4">A momentum strategy based on the 9/21 Exponential Moving Average crossover.</p>
+<div class="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+<p><span class="text-text-secondary-light dark:text-text-secondary-dark">Performance:</span> <span class="font-bold text-success">+15.2%</span></p>
+<p><span class="text-text-secondary-light dark:text-text-secondary-dark">Win Rate:</span> <span class="font-bold">62%</span></p>
+<p><span class="text-text-secondary-light dark:text-text-secondary-dark">Trades:</span> <span class="font-bold">45</span></p>
+</div>
+</div>
+<div class="p-3 border-t border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark/50 rounded-b-xl">
+<div class="flex items-center justify-end gap-2">
+<button class="p-2 rounded-lg hover:bg-primary/10 text-text-secondary-light dark:text-text-secondary-dark hover:text-primary transition-colors" data-alt="Configure strategy settings">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="p-2 rounded-lg hover:bg-primary/10 text-text-secondary-light dark:text-text-secondary-dark hover:text-primary transition-colors" data-alt="Backtest strategy performance">
+<span class="material-symbols-outlined">candlestick_chart</span>
+</button>
+<button class="p-2 rounded-lg hover:bg-primary/10 text-warning hover:text-warning" data-alt="Pause strategy execution">
+<span class="material-symbols-outlined">pause_circle</span>
+</button>
+<button class="p-2 rounded-lg hover:bg-danger/10 text-danger" data-alt="Delete strategy">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+</div>
+<div class="flex flex-col rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark shadow-sm hover:shadow-lg transition-shadow duration-300">
+<div class="p-5 border-b border-border-light dark:border-border-dark flex justify-between items-start gap-4">
+<h2 class="text-lg font-bold">RSI Mean Reversion</h2>
+<div class="flex-shrink-0 text-xs font-bold py-1 px-2.5 rounded-full bg-warning/10 text-warning flex items-center gap-1.5">
+<span class="w-2 h-2 bg-warning rounded-full"></span>
+                        Paused
+                    </div>
+</div>
+<div class="p-5 flex-grow">
+<p class="text-sm text-text-secondary-light dark:text-text-secondary-dark mb-4">Trades on overbought/oversold signals from the Relative Strength Index (14).</p>
+<div class="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+<p><span class="text-text-secondary-light dark:text-text-secondary-dark">Performance:</span> <span class="font-bold text-danger">-2.1%</span></p>
+<p><span class="text-text-secondary-light dark:text-text-secondary-dark">Win Rate:</span> <span class="font-bold">48%</span></p>
+<p><span class="text-text-secondary-light dark:text-text-secondary-dark">Trades:</span> <span class="font-bold">112</span></p>
+</div>
+</div>
+<div class="p-3 border-t border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark/50 rounded-b-xl">
+<div class="flex items-center justify-end gap-2">
+<button class="p-2 rounded-lg hover:bg-primary/10 text-text-secondary-light dark:text-text-secondary-dark hover:text-primary transition-colors" data-alt="Configure strategy settings">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="p-2 rounded-lg hover:bg-primary/10 text-text-secondary-light dark:text-text-secondary-dark hover:text-primary transition-colors" data-alt="Backtest strategy performance">
+<span class="material-symbols-outlined">candlestick_chart</span>
+</button>
+<button class="p-2 rounded-lg hover:bg-success/10 text-success" data-alt="Run strategy">
+<span class="material-symbols-outlined">play_circle</span>
+</button>
+<button class="p-2 rounded-lg hover:bg-danger/10 text-danger" data-alt="Delete strategy">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+</div>
+<div class="flex flex-col rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark shadow-sm hover:shadow-lg transition-shadow duration-300">
+<div class="p-5 border-b border-border-light dark:border-border-dark flex justify-between items-start gap-4">
+<h2 class="text-lg font-bold">Bollinger Breakout</h2>
+<div class="flex-shrink-0 text-xs font-bold py-1 px-2.5 rounded-full bg-danger/10 text-danger flex items-center gap-1.5">
+<span class="w-2 h-2 bg-danger rounded-full"></span>
+                        Stopped
+                    </div>
+</div>
+<div class="p-5 flex-grow">
+<p class="text-sm text-text-secondary-light dark:text-text-secondary-dark mb-4">A volatility-based strategy that enters trades when price breaks out of the Bollinger Bands.</p>
+<div class="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+<p><span class="text-text-secondary-light dark:text-text-secondary-dark">Performance:</span> <span class="font-bold">+4.8%</span></p>
+<p><span class="text-text-secondary-light dark:text-text-secondary-dark">Win Rate:</span> <span class="font-bold">55%</span></p>
+<p><span class="text-text-secondary-light dark:text-text-secondary-dark">Trades:</span> <span class="font-bold">89</span></p>
+</div>
+</div>
+<div class="p-3 border-t border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark/50 rounded-b-xl">
+<div class="flex items-center justify-end gap-2">
+<button class="p-2 rounded-lg hover:bg-primary/10 text-text-secondary-light dark:text-text-secondary-dark hover:text-primary transition-colors" data-alt="Configure strategy settings">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="p-2 rounded-lg hover:bg-primary/10 text-text-secondary-light dark:text-text-secondary-dark hover:text-primary transition-colors" data-alt="Backtest strategy performance">
+<span class="material-symbols-outlined">candlestick_chart</span>
+</button>
+<button class="p-2 rounded-lg hover:bg-success/10 text-success" data-alt="Run strategy">
+<span class="material-symbols-outlined">play_circle</span>
+</button>
+<button class="p-2 rounded-lg hover:bg-danger/10 text-danger" data-alt="Delete strategy">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+</body></html>
