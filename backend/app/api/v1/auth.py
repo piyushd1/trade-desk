@@ -106,42 +106,151 @@ async def _store_broker_session(
     return broker_session
 
 
+from pydantic import BaseModel, EmailStr, Field
+
+class UserRegister(BaseModel):
+    """User registration request"""
+    username: str = Field(..., min_length=3, max_length=50)
+    email: EmailStr
+    password: str = Field(..., min_length=8)
+    full_name: Optional[str] = None
+
+class UserLogin(BaseModel):
+    """User login request"""
+    username: str
+    password: str
+
 @router.post("/register")
-async def register(db: AsyncSession = Depends(get_db)):
+async def register(user_data: UserRegister, request: Request, db: AsyncSession = Depends(get_db)):
     """
     Register new user
     
-    TODO: Implement user registration
-    - Validate email/username
-    - Hash password
-    - Create user record
-    - Generate 2FA secret
+    Creates a new user account with hashed password
     """
+    from app.services.auth_service import auth_service
+    from app.models.user import User, UserRole
+    
+    # Check if username exists
+    existing_user = await auth_service.get_user_by_username(user_data.username, db)
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already registered"
+        )
+    
+    # Check if email exists
+    existing_email = await auth_service.get_user_by_email(user_data.email, db)
+    if existing_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Create user
+    user = User(
+        username=user_data.username,
+        email=user_data.email,
+        password_hash=auth_service.hash_password(user_data.password),
+        full_name=user_data.full_name,
+        role=UserRole.TRADER,
+        is_active=True,
+        created_at=datetime.now(timezone.utc).replace(tzinfo=None),
+        updated_at=datetime.now(timezone.utc).replace(tzinfo=None),
+    )
+    
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    
+    # Log registration
+    await audit_service.log_event(
+        action="user_register",
+        entity_type="user",
+        entity_id=str(user.id),
+        details={"username": user.username, "email": user.email},
+        user_id=user.id,
+        username=user.username,
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+        db=db
+    )
+    
     return {
-        "message": "User registration endpoint - TODO",
-        "status": "not_implemented"
+        "status": "success",
+        "message": "User registered successfully",
+        "user_id": user.id,
+        "username": user.username
     }
 
 
 @router.post("/login")
 async def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
+    user_data: UserLogin,
+    request: Request,
     db: AsyncSession = Depends(get_db)
 ):
     """
     User login with username/password
     
     Returns JWT access token and refresh token
-    
-    TODO: Implement
-    - Validate credentials
-    - Check 2FA
-    - Generate JWT tokens
-    - Log audit event
     """
+    from app.services.auth_service import auth_service
+    
+    # Authenticate user
+    user = await auth_service.authenticate_user(user_data.username, user_data.password, db)
+    
+    if not user:
+        # Log failed login attempt
+        await audit_service.log_event(
+            action="login_failed",
+            entity_type="user",
+            entity_id=user_data.username,
+            details={"reason": "invalid_credentials"},
+            username=user_data.username,
+            ip_address=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+            db=db
+        )
+        
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Create JWT tokens
+    access_token = auth_service.create_access_token(
+        data={"sub": user.username, "user_id": user.id, "role": user.role.value}
+    )
+    refresh_token = auth_service.create_refresh_token(
+        data={"sub": user.username, "user_id": user.id}
+    )
+    
+    # Log successful login
+    await audit_service.log_event(
+        action="login_success",
+        entity_type="user",
+        entity_id=str(user.id),
+        details={"username": user.username},
+        user_id=user.id,
+        username=user.username,
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+        db=db
+    )
+    
     return {
-        "message": "Login endpoint - TODO",
-        "status": "not_implemented"
+        "status": "success",
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "full_name": user.full_name,
+            "role": user.role.value
+        }
     }
 
 
