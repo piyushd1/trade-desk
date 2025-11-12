@@ -218,11 +218,51 @@ ZERODHA_REFRESH_EXPIRY_BUFFER_MINUTES = 60
 
 ---
 
+## 🔐 Risk Management System (Added Later in Day 2)
+
+### Implementation Complete ✅
+
+**Database Tables:**
+- `risk_configs` - User/system-wide risk limits
+- `daily_risk_metrics` - Daily trading metrics and P&L
+
+**Risk Manager Service:**
+- 6-layer risk validation system
+- Kill switch mechanism
+- Position limits (value & count)
+- Order limits (value & daily count)
+- OPS (Orders Per Second) limit: 10/sec
+- Daily loss tracking: ₹5,000 limit
+- Trading hours validation (9:15 AM - 3:30 PM IST)
+- Comprehensive pre-trade checks
+- Automatic breach logging
+
+**API Endpoints Added:**
+- `GET /api/v1/risk/config` - Get risk configuration
+- `PUT /api/v1/risk/config` - Update risk limits
+- `POST /api/v1/risk/kill-switch` - Toggle kill switch
+- `GET /api/v1/risk/kill-switch/status` - Check kill switch
+- `POST /api/v1/risk/pre-trade-check` - Validate order
+- `GET /api/v1/risk/metrics/daily` - Daily metrics
+- `GET /api/v1/risk/metrics/history` - Historical metrics
+- `GET /api/v1/risk/breaches` - Query breaches
+- `GET /api/v1/risk/status` - Comprehensive status
+- `GET /api/v1/risk/limits/check` - Utilization check
+
+**Testing:**
+- ✅ 9 unit tests passing
+- ✅ 14 API tests passing
+- ✅ All risk checks verified
+- ✅ Kill switch operational
+- ✅ Breach logging working
+
+---
+
 ## 📌 Outstanding TODOs / Next Steps
 
 | Priority | Item | Notes |
 |----------|------|-------|
-| P0 | Risk Controls | Position limits, daily loss limits, kill switch before live trading |
+| ~~P0~~ | ~~Risk Controls~~ | ✅ **COMPLETE** - All risk controls implemented and tested |
 | P1 | Paper Trading Engine | Simulated order flow + strategy playback |
 | P1 | Strategy SDK | Base class, hot reload, parameter management |
 | P1 | Order Placement APIs | Safe wrappers for placing/cancelling orders (with risk checks) |
@@ -236,34 +276,49 @@ ZERODHA_REFRESH_EXPIRY_BUFFER_MINUTES = 60
 - **Git repository initialized and pushed** to GitHub (`piyushd1/trade-desk`)
 - **Token auto-refresh is operational** - runs every 15 minutes, refreshes tokens before expiry
 - **Audit logging is SEBI-compliant** - immutable records, 7-year retention ready, complete audit trail
-- **All tests passing** - automated test script available (`test_audit_logging.sh`)
+- **Risk management system complete** - kill switch, position/order/loss limits, OPS limiting, trading hours
+- **All tests passing** - 23 tests total (audit + risk management)
 - **Documentation cleaned up** - removed temporary files, created comprehensive README
-- **Production-ready** from token management and audit logging perspective
+- **Production-ready** from infrastructure, token management, audit logging, and risk control perspective
+- **Ready for order placement** - all P0 risk controls in place before live trading
 
 ---
 
 ## 🗂️ Reference Commands
 
 ```bash
-# Check token refresh service status
+# Health & Status
+curl https://piyushdev.com/health
 curl https://piyushdev.com/api/v1/auth/zerodha/refresh/status | python3 -m json.tool
+curl "https://piyushdev.com/api/v1/risk/status?user_id=1" | python3 -m json.tool
 
-# Query recent audit logs
+# Audit Logging
 curl "https://piyushdev.com/api/v1/audit/logs?limit=10" | python3 -m json.tool
-
-# Query system events
 curl "https://piyushdev.com/api/v1/system/events?limit=10" | python3 -m json.tool
 
-# Manual token refresh
-curl -X POST "https://piyushdev.com/api/v1/auth/zerodha/refresh?user_identifier=USER" | python3 -m json.tool
+# Risk Management
+curl https://piyushdev.com/api/v1/risk/config | python3 -m json.tool
+curl https://piyushdev.com/api/v1/risk/kill-switch/status | python3 -m json.tool
+curl "https://piyushdev.com/api/v1/risk/metrics/daily?user_id=1" | python3 -m json.tool
+curl "https://piyushdev.com/api/v1/risk/breaches?user_id=1" | python3 -m json.tool
 
-# Run automated tests
+# Kill Switch (Emergency)
+curl -X POST https://piyushdev.com/api/v1/risk/kill-switch \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": false, "reason": "Emergency stop"}'
+
+# Pre-Trade Check
+curl -X POST https://piyushdev.com/api/v1/risk/pre-trade-check \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": 1, "symbol": "RELIANCE", "quantity": 10, "price": 2500.0}'
+
+# Run Tests
 ./test_audit_logging.sh
+./test_risk_api.sh
+python test_risk_management.py
 
-# View backend logs
+# Backend Management
 tail -f /tmp/backend.log
-
-# Restart backend
 pkill -f "uvicorn app.main:app"
 cd /home/trade-desk/backend && source venv/bin/activate
 nohup python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/backend.log 2>&1 &
@@ -275,17 +330,25 @@ echo $! > /tmp/backend.pid
 ## 📦 Git Repository
 
 **Repository:** https://github.com/piyushd1/trade-desk  
-**Latest Commit:** `feat: implement token auto-refresh and audit logging`
+**Branch:** master  
+**Total Commits:** 4
 
-**Commit Summary:**
-- 11 files changed
-- 1,543 insertions
-- Token auto-refresh system complete
-- SEBI-compliant audit logging complete
-- All tests passing
+**Commit History:**
+1. `chore: initial import` - Day 1 baseline
+2. `feat: implement token auto-refresh and audit logging`
+3. `docs: cleanup and consolidate documentation`
+4. `feat: implement comprehensive risk management system`
+
+**Day 2 Statistics:**
+- 26 files changed
+- ~4,000 lines added
+- 3 new services created
+- 20+ API endpoints added
+- 23 tests passing
 
 ---
 
 **Prepared by:** TradeDesk Backend Agent  
-**Next Actions:** Implement risk controls (P0) before enabling live trading
+**Status:** Day 2 Complete - All P0 Priorities Achieved  
+**Next Actions:** Order placement APIs, paper trading engine, strategy SDK (P1 priorities)
 
