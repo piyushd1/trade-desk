@@ -5,6 +5,7 @@ User authentication, OAuth, and JWT token management
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Optional, Dict
@@ -318,20 +319,9 @@ async def zerodha_oauth_callback(
             db=db
         )
 
-        return {
-            "status": "success",
-            "message": "Successfully connected to Zerodha!",
-            "user_id": session_data.get("user_id"),
-            "user_name": session_data.get("user_name"),
-            "broker": "zerodha",
-            "user_identifier": user_identifier,
-            "state": state,
-            "access_token": access_token,
-            "access_token_preview": _mask_token(access_token),
-            "refresh_token_preview": _mask_token(refresh_token) if refresh_token else None,
-            "expires_at": broker_session.expires_at.isoformat() if broker_session.expires_at else None,
-            "note": "Access token stored securely. You can now place orders."
-        }
+        # Redirect to frontend dashboard
+        frontend_url = settings.APP_URL or "https://piyushdev.com"
+        return RedirectResponse(url=f"{frontend_url}/dashboard?auth=success&user={user_identifier}")
     else:
         # Log OAuth error
         await audit_service.log_event(
@@ -348,11 +338,10 @@ async def zerodha_oauth_callback(
             db=db
         )
         
-        return {
-            "status": "error",
-            "message": session_data.get("message", "Unknown error"),
-            "broker": "zerodha"
-        }
+        # Redirect to frontend with error
+        frontend_url = settings.APP_URL or "https://piyushdev.com"
+        error_msg = session_data.get("message", "Unknown error")
+        return RedirectResponse(url=f"{frontend_url}/?error={error_msg}")
 
 
 @router.post("/brokers/groww/connect")
