@@ -56,6 +56,10 @@ async def _store_broker_session(
     }
     expires_at = _calculate_zerodha_expiry()
     now_utc = datetime.now(timezone.utc)
+    
+    # Convert timezone-aware datetimes to naive UTC for SQLite compatibility
+    expires_at_naive = expires_at.replace(tzinfo=None) if expires_at else None
+    now_utc_naive = now_utc.replace(tzinfo=None)
 
     result = await db.execute(
         select(BrokerSession).where(
@@ -73,8 +77,8 @@ async def _store_broker_session(
             broker_session.public_token = public_token
         broker_session.status = "active"
         broker_session.meta = meta
-        broker_session.expires_at = expires_at
-        broker_session.updated_at = now_utc
+        broker_session.expires_at = expires_at_naive
+        broker_session.updated_at = now_utc_naive
     else:
         broker_session = BrokerSession(
             user_identifier=user_identifier,
@@ -84,9 +88,9 @@ async def _store_broker_session(
             public_token=public_token,
             status="active",
             meta=meta,
-            expires_at=expires_at,
-            created_at=now_utc,
-            updated_at=now_utc,
+            expires_at=expires_at_naive,
+            created_at=now_utc_naive,
+            updated_at=now_utc_naive,
         )
         db.add(broker_session)
 
