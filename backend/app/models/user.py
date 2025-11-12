@@ -57,6 +57,7 @@ class User(Base):
     orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
     positions = relationship("Position", back_populates="user", cascade="all, delete-orphan")
     audit_logs = relationship("AuditLog", back_populates="user", cascade="all, delete-orphan")
+    risk_config = relationship("RiskConfig", back_populates="user", uselist=False, cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<User(id={self.id}, username={self.username}, role={self.role})>"

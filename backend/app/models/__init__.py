@@ -10,6 +10,7 @@ from app.models.order import Order, Trade
 from app.models.position import Position
 from app.models.audit import AuditLog, RiskBreachLog, SystemEvent
 from app.models.broker_session import BrokerSession
+from app.models.risk_config import RiskConfig, DailyRiskMetrics
 
 __all__ = [
     "User",
@@ -23,5 +24,7 @@ __all__ = [
     "RiskBreachLog",
     "SystemEvent",
     "BrokerSession",
+    "RiskConfig",
+    "DailyRiskMetrics",
 ]
 
