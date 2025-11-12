@@ -7,8 +7,9 @@ export default function Home() {
   const router = useRouter();
 
   const handleLogin = () => {
-    // For now, redirect directly to get login URL
-    window.location.href = "https://piyushdev.com/api/v1/auth/zerodha/connect?state=web_user";
+    // Redirect to OAuth endpoint
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    window.location.href = `${apiUrl}/auth/zerodha/connect?state=web_user`;
   };
 
   return (
