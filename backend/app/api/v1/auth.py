@@ -14,6 +14,8 @@ from app.database import get_db
 from app.config import settings
 from app.models import BrokerSession
 from app.utils.crypto import encrypt, decrypt
+from app.services.audit_service import audit_service
+from fastapi import Request
 
 router = APIRouter()
 
@@ -44,7 +46,14 @@ async def _store_broker_session(
 ) -> BrokerSession:
     """Store or update the broker session with encrypted tokens"""
     encrypted_token = encrypt(session_data["access_token"])
-    meta = {k: v for k, v in session_data.items() if k != "access_token"}
+    refresh_token = session_data.get("refresh_token")
+    refresh_token_encrypted = encrypt(refresh_token) if refresh_token else None
+    public_token = session_data.get("public_token")
+    meta = {
+        k: v
+        for k, v in session_data.items()
+        if k not in {"access_token", "refresh_token"}
+    }
     expires_at = _calculate_zerodha_expiry()
     now_utc = datetime.now(timezone.utc)
 
@@ -58,6 +67,10 @@ async def _store_broker_session(
 
     if broker_session:
         broker_session.access_token_encrypted = encrypted_token
+        if refresh_token_encrypted:
+            broker_session.refresh_token_encrypted = refresh_token_encrypted
+        if public_token:
+            broker_session.public_token = public_token
         broker_session.status = "active"
         broker_session.meta = meta
         broker_session.expires_at = expires_at
@@ -67,6 +80,8 @@ async def _store_broker_session(
             user_identifier=user_identifier,
             broker=broker,
             access_token_encrypted=encrypted_token,
+            refresh_token_encrypted=refresh_token_encrypted,
+            public_token=public_token,
             status="active",
             meta=meta,
             expires_at=expires_at,
@@ -167,6 +182,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 
 @router.get("/zerodha/connect")
 async def zerodha_oauth_initiate(
+    request: Request,
     state: Optional[str] = Query(
         default=None,
         description="Optional user identifier to track session (e.g., username, email, or friend name)"
@@ -181,6 +197,17 @@ async def zerodha_oauth_initiate(
     from app.services.zerodha_service import zerodha_service
     
     login_url = zerodha_service.get_login_url(state)
+    
+    # Log audit event
+    await audit_service.log_event(
+        action="oauth_initiate",
+        entity_type="broker_connection",
+        entity_id=state or "anonymous",
+        details={"broker": "zerodha", "state": state},
+        username=state,
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
     
     return {
         "status": "success",
@@ -198,6 +225,7 @@ async def zerodha_oauth_initiate(
 
 @router.get("/zerodha/callback")
 async def zerodha_oauth_callback(
+    request: Request,
     request_token: Optional[str] = None,
     status: Optional[str] = None,
     action: Optional[str] = None,
@@ -221,6 +249,23 @@ async def zerodha_oauth_callback(
     
     # Check if authorization was successful
     if status != "success" or not request_token:
+        # Log failed OAuth attempt
+        await audit_service.log_event(
+            action="oauth_callback_failed",
+            entity_type="broker_connection",
+            entity_id=state or "anonymous",
+            details={
+                "broker": "zerodha",
+                "status": status,
+                "action": action,
+                "request_token_received": request_token is not None
+            },
+            username=state,
+            ip_address=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+            db=db
+        )
+        
         return {
             "status": "error",
             "message": "Authorization failed or was denied",
@@ -243,6 +288,25 @@ async def zerodha_oauth_callback(
             session_data=session_data,
         )
         access_token = session_data["access_token"]
+        refresh_token = session_data.get("refresh_token")
+
+        # Log successful OAuth
+        await audit_service.log_event(
+            action="oauth_callback_success",
+            entity_type="broker_connection",
+            entity_id=user_identifier,
+            details={
+                "broker": "zerodha",
+                "user_id": session_data.get("user_id"),
+                "user_name": session_data.get("user_name"),
+                "has_refresh_token": refresh_token is not None,
+                "expires_at": broker_session.expires_at.isoformat() if broker_session.expires_at else None
+            },
+            username=user_identifier,
+            ip_address=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+            db=db
+        )
 
         return {
             "status": "success",
@@ -254,10 +318,26 @@ async def zerodha_oauth_callback(
             "state": state,
             "access_token": access_token,
             "access_token_preview": _mask_token(access_token),
+            "refresh_token_preview": _mask_token(refresh_token) if refresh_token else None,
             "expires_at": broker_session.expires_at.isoformat() if broker_session.expires_at else None,
             "note": "Access token stored securely. You can now place orders."
         }
     else:
+        # Log OAuth error
+        await audit_service.log_event(
+            action="oauth_callback_error",
+            entity_type="broker_connection",
+            entity_id=state or "anonymous",
+            details={
+                "broker": "zerodha",
+                "error_message": session_data.get("message", "Unknown error")
+            },
+            username=state,
+            ip_address=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+            db=db
+        )
+        
         return {
             "status": "error",
             "message": session_data.get("message", "Unknown error"),
@@ -355,4 +435,110 @@ async def get_zerodha_session(
         response["access_token_preview"] = _mask_token(decrypted_token)
 
     return {"status": "success", "session": response}
+
+
+@router.post("/zerodha/refresh")
+async def manual_refresh_zerodha_token(
+    request: Request,
+    user_identifier: Optional[str] = Query(
+        default=None,
+        description="User identifier for the session to refresh"
+    ),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Manually refresh Zerodha access token for a user session
+    
+    This endpoint allows manual triggering of token refresh for a specific user.
+    Useful for testing or when auto-refresh fails.
+    
+    Returns:
+        dict: Refresh operation result
+    """
+    from app.services.token_refresh_service import token_refresh_service
+    
+    identifier = user_identifier or "default"
+    
+    # Find the session
+    result = await db.execute(
+        select(BrokerSession).where(
+            BrokerSession.user_identifier == identifier,
+            BrokerSession.broker == "zerodha",
+        )
+    )
+    session = result.scalar_one_or_none()
+    
+    if not session:
+        # Log failed manual refresh attempt
+        await audit_service.log_event(
+            action="token_refresh_manual_failed",
+            entity_type="broker_session",
+            entity_id=identifier,
+            details={
+                "broker": "zerodha",
+                "reason": "session_not_found"
+            },
+            username=identifier,
+            ip_address=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+            db=db
+        )
+        
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No Zerodha session found for user: {identifier}"
+        )
+    
+    # Refresh the session
+    refresh_result = await token_refresh_service.refresh_session(session)
+    
+    # Log manual refresh attempt
+    await audit_service.log_event(
+        action="token_refresh_manual",
+        entity_type="broker_session",
+        entity_id=identifier,
+        details={
+            "broker": "zerodha",
+            "status": refresh_result["status"],
+            "expires_at": refresh_result.get("expires_at"),
+            "error": refresh_result.get("message") if refresh_result["status"] != "success" else None
+        },
+        username=identifier,
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+        db=db
+    )
+    
+    if refresh_result["status"] == "success":
+        return {
+            "status": "success",
+            "message": "Token refreshed successfully",
+            "user_identifier": identifier,
+            "expires_at": refresh_result.get("expires_at"),
+        }
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=refresh_result.get("message", "Failed to refresh token")
+        )
+
+
+@router.get("/zerodha/refresh/status")
+async def get_refresh_service_status():
+    """
+    Get status of the token refresh service
+    
+    Returns:
+        dict: Refresh service status information
+    """
+    from app.services.token_refresh_service import token_refresh_service
+    from app.config import settings
+    
+    status_info = token_refresh_service.get_status()
+    
+    return {
+        "status": "success",
+        "auto_refresh_enabled": settings.ZERODHA_AUTO_REFRESH_ENABLED,
+        "refresh_service": status_info,
+    }
 

@@ -55,6 +55,9 @@ class Settings(BaseSettings):
     ZERODHA_API_KEY: Optional[str] = None
     ZERODHA_API_SECRET: Optional[str] = None
     ZERODHA_REDIRECT_URL: Optional[str] = None
+    ZERODHA_AUTO_REFRESH_ENABLED: bool = True
+    ZERODHA_REFRESH_INTERVAL_MINUTES: int = 15
+    ZERODHA_REFRESH_EXPIRY_BUFFER_MINUTES: int = 60
     
     # Groww
     GROWW_API_KEY: Optional[str] = None

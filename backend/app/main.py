@@ -11,10 +11,13 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 import time
 import logging
+import asyncio
 
 from app.config import settings
 from app.database import init_db, close_db
 from app.api.v1 import api_router
+from app.services.token_refresh_service import token_refresh_service
+from app.services.audit_service import audit_service
 
 # Configure logging
 logging.basicConfig(
@@ -39,9 +42,30 @@ async def lifespan(app: FastAPI):
         await init_db()
         logger.info("✅ Database initialized")
         
+        # Log system startup event
+        await audit_service.log_system_event(
+            event_type="startup",
+            severity="info",
+            message="TradeDesk application started",
+            component="main",
+            details={
+                "environment": settings.APP_ENV,
+                "debug_mode": settings.DEBUG,
+                "version": "1.0.0"
+            }
+        )
+        
+        # Start token refresh service if enabled
+        if settings.ZERODHA_AUTO_REFRESH_ENABLED:
+            token_refresh_service.refresh_interval_minutes = settings.ZERODHA_REFRESH_INTERVAL_MINUTES
+            token_refresh_service.expiry_buffer_minutes = settings.ZERODHA_REFRESH_EXPIRY_BUFFER_MINUTES
+            await token_refresh_service.start()
+            logger.info("✅ Token refresh service started")
+        else:
+            logger.info("⚠️ Token auto-refresh is disabled")
+        
         # TODO: Initialize Redis connection
         # TODO: Initialize Celery workers
-        # TODO: Start background tasks
         
         logger.info("✅ Application startup complete")
         
@@ -55,6 +79,19 @@ async def lifespan(app: FastAPI):
     logger.info("🛑 Shutting down...")
     
     try:
+        # Log system shutdown event
+        await audit_service.log_system_event(
+            event_type="shutdown",
+            severity="info",
+            message="TradeDesk application shutting down",
+            component="main"
+        )
+        
+        # Stop token refresh service
+        if settings.ZERODHA_AUTO_REFRESH_ENABLED:
+            token_refresh_service.stop()
+            logger.info("✅ Token refresh service stopped")
+        
         await close_db()
         logger.info("✅ Database connections closed")
         
@@ -64,6 +101,13 @@ async def lifespan(app: FastAPI):
         
     except Exception as e:
         logger.error(f"❌ Shutdown error: {e}")
+        await audit_service.log_system_event(
+            event_type="shutdown",
+            severity="error",
+            message=f"Error during shutdown: {str(e)}",
+            component="main",
+            stack_trace=str(e)
+        )
 
 
 # Create FastAPI application
@@ -135,13 +179,31 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 # Health check endpoint
 @app.get("/health", tags=["Health"])
-async def health_check():
+async def health_check(request: Request):
     """
     Health check endpoint for monitoring
     
     Returns:
         dict: Service health status
     """
+    # Log health check (lightweight, async fire-and-forget)
+    try:
+        # Don't await to avoid blocking health check response
+        asyncio.create_task(
+            audit_service.log_system_event(
+                event_type="health_check",
+                severity="info",
+                message="Health check endpoint accessed",
+                component="main",
+                details={
+                    "ip_address": request.client.host if request.client else None,
+                    "user_agent": request.headers.get("user-agent")
+                }
+            )
+        )
+    except Exception:
+        pass  # Don't fail health check if audit logging fails
+    
     return {
         "status": "healthy",
         "environment": settings.APP_ENV,

@@ -67,6 +67,10 @@ class ZerodhaService:
             return {
                 "status": "success",
                 "access_token": data["access_token"],
+                "refresh_token": data.get("refresh_token"),
+                "public_token": data.get("public_token"),
+                "login_time": data.get("login_time"),
+                "api_key": data.get("api_key"),
                 "user_id": data.get("user_id"),
                 "user_name": data.get("user_name"),
                 "email": data.get("email"),
@@ -149,6 +153,52 @@ class ZerodhaService:
         except Exception as e:
             logger.error(f"Failed to fetch holdings: {e}")
             return {"status": "error", "message": str(e)}
+    
+    def renew_access_token(self, refresh_token: str) -> Dict:
+        """
+        Renew access token using refresh token
+        
+        Args:
+            refresh_token: Valid refresh token from previous session
+        
+        Returns:
+            dict: New session data with refreshed access_token
+        """
+        try:
+            # Create a new Kite instance for renewal
+            kite = KiteConnect(api_key=self.api_key)
+            
+            # Renew access token using refresh token
+            data = kite.renew_access_token(
+                refresh_token=refresh_token,
+                api_secret=self.api_secret
+            )
+            
+            logger.info(f"✅ Zerodha access token renewed successfully for user: {data.get('user_id')}")
+            
+            return {
+                "status": "success",
+                "access_token": data["access_token"],
+                "refresh_token": data.get("refresh_token"),  # May be same or new
+                "public_token": data.get("public_token"),
+                "login_time": data.get("login_time"),
+                "api_key": data.get("api_key"),
+                "user_id": data.get("user_id"),
+                "user_name": data.get("user_name"),
+                "email": data.get("email"),
+                "user_type": data.get("user_type"),
+                "broker": data.get("broker"),
+                "exchanges": data.get("exchanges", []),
+                "products": data.get("products", []),
+                "order_types": data.get("order_types", []),
+            }
+        
+        except Exception as e:
+            logger.error(f"❌ Failed to renew Zerodha access token: {e}")
+            return {
+                "status": "error",
+                "message": str(e)
+            }
 
 
 # Global instance
