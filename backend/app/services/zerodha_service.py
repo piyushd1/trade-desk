@@ -1,0 +1,156 @@
+"""
+Zerodha Service
+Handles Zerodha OAuth authentication and API interactions
+"""
+
+from typing import Dict, Optional
+from urllib.parse import quote
+from kiteconnect import KiteConnect
+import hashlib
+import logging
+
+from app.config import settings
+
+logger = logging.getLogger(__name__)
+
+
+class ZerodhaService:
+    """
+    Service for Zerodha Kite Connect OAuth and API operations
+    
+    Based on official docs: https://kite.trade/docs/connect/v3/
+    """
+    
+    def __init__(self):
+        """Initialize Zerodha service with API credentials"""
+        self.api_key = settings.ZERODHA_API_KEY
+        self.api_secret = settings.ZERODHA_API_SECRET
+        self.redirect_url = settings.ZERODHA_REDIRECT_URL
+        self.kite = KiteConnect(api_key=self.api_key)
+    
+    def get_login_url(self, state: Optional[str] = None) -> str:
+        """
+        Generate Zerodha Kite Connect login URL
+        
+        Returns:
+            str: Login URL to redirect user to
+        """
+        login_url = self.kite.login_url()
+        if state:
+            # Append state parameter for tracking user sessions
+            login_url = f"{login_url}&state={quote(state)}"
+            logger.info(f"Generated Zerodha login URL with state={state}")
+        else:
+            logger.info("Generated Zerodha login URL")
+        return login_url
+    
+    def generate_session(self, request_token: str) -> Dict:
+        """
+        Exchange request_token for access_token
+        
+        Args:
+            request_token: Token received from Zerodha OAuth callback
+        
+        Returns:
+            dict: Session data with access_token, user details, etc.
+        """
+        try:
+            # Generate session using request token
+            # Checksum = sha256(api_key + request_token + api_secret)
+            data = self.kite.generate_session(
+                request_token=request_token,
+                api_secret=self.api_secret
+            )
+            
+            logger.info(f"✅ Zerodha session generated successfully for user: {data.get('user_id')}")
+            
+            return {
+                "status": "success",
+                "access_token": data["access_token"],
+                "user_id": data.get("user_id"),
+                "user_name": data.get("user_name"),
+                "email": data.get("email"),
+                "user_type": data.get("user_type"),
+                "broker": data.get("broker"),
+                "exchanges": data.get("exchanges", []),
+                "products": data.get("products", []),
+                "order_types": data.get("order_types", []),
+            }
+        
+        except Exception as e:
+            logger.error(f"❌ Failed to generate Zerodha session: {e}")
+            return {
+                "status": "error",
+                "message": str(e)
+            }
+    
+    def set_access_token(self, access_token: str):
+        """
+        Set access token for API calls
+        
+        Args:
+            access_token: Valid Zerodha access token
+        """
+        self.kite.set_access_token(access_token)
+        logger.info("Access token set for Zerodha API")
+    
+    def get_profile(self) -> Dict:
+        """
+        Get user profile
+        
+        Returns:
+            dict: User profile data
+        """
+        try:
+            profile = self.kite.profile()
+            return {"status": "success", "data": profile}
+        except Exception as e:
+            logger.error(f"Failed to fetch profile: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    def get_margins(self) -> Dict:
+        """
+        Get account margins
+        
+        Returns:
+            dict: Margin data for all segments
+        """
+        try:
+            margins = self.kite.margins()
+            return {"status": "success", "data": margins}
+        except Exception as e:
+            logger.error(f"Failed to fetch margins: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    def get_positions(self) -> Dict:
+        """
+        Get current positions
+        
+        Returns:
+            dict: Positions data (net and day)
+        """
+        try:
+            positions = self.kite.positions()
+            return {"status": "success", "data": positions}
+        except Exception as e:
+            logger.error(f"Failed to fetch positions: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    def get_holdings(self) -> Dict:
+        """
+        Get holdings
+        
+        Returns:
+            dict: Holdings data
+        """
+        try:
+            holdings = self.kite.holdings()
+            return {"status": "success", "data": holdings}
+        except Exception as e:
+            logger.error(f"Failed to fetch holdings: {e}")
+            return {"status": "error", "message": str(e)}
+
+
+# Global instance
+zerodha_service = ZerodhaService()
+

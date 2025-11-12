@@ -1,0 +1,55 @@
+╔══════════════════════════════════════════════════════════════════╗
+║              ZERODHA REGISTRATION - QUICK REFERENCE              ║
+╚══════════════════════════════════════════════════════════════════╝
+
+📋 STEP-BY-STEP:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Visit: https://developers.kite.trade/
+
+2. Login with your Zerodha trading account credentials
+
+3. Click "Create new app"
+
+4. Fill in these exact values:
+
+   ┌────────────────────────────────────────────────────────────┐
+   │ App Name:     Trade Desk - Personal Algo Trading           │
+   │                                                             │
+   │ Type:         Connect                                       │
+   │                                                             │
+   │ Redirect URL: https://piyushdev.com/api/v1/auth/zerodha/callback │
+   │                                                             │
+   │ Postback URL: https://piyushdev.com/api/v1/postback/zerodha│
+   └────────────────────────────────────────────────────────────┘
+
+5. Click "Create"
+
+6. Copy your credentials:
+   • API Key: xxxxxxxxxxxxx
+   • API Secret: yyyyyyyyyyyy
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 AFTER REGISTRATION:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Run this to update configuration:
+
+   cd /home/trade-desk
+   ./update_zerodha_config.sh
+
+Then restart backend and let me know to continue!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🧪 VERIFY YOUR SETUP IS WORKING:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+From your local machine or browser:
+
+   https://piyushdev.com/health        ← Should return JSON
+   https://piyushdev.com/docs           ← Should show Swagger UI
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
