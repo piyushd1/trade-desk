@@ -25,6 +25,11 @@ class AuditService:
     - Complete audit trail for all operations
     """
     
+    async def initialize(self) -> None:
+        """Initialize the audit service."""
+        # For now, just log initialization
+        logger.info("Audit service initialized")
+    
     @staticmethod
     async def log_event(
         action: str,

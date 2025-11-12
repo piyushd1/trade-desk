@@ -41,6 +41,11 @@ class TokenRefreshService:
         self._last_run: Optional[datetime] = None
         self._next_run: Optional[datetime] = None
     
+    @property
+    def is_running(self) -> bool:
+        """Check if the service is running"""
+        return self._running
+    
     async def refresh_session(self, broker_session: BrokerSession) -> Dict:
         """
         Refresh a single broker session

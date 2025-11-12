@@ -1,200 +1,227 @@
-# TradeDesk - Backend
+# TradeDesk Backend
 
-TradeDesk - Personal algorithmic trading platform with SEBI compliance for NSE/BSE trading.
+SEBI-compliant algorithmic trading platform backend built with FastAPI, PostgreSQL, and modern Python.
 
-## 🚀 Quick Start
+## 🏗️ Architecture
 
-### Prerequisites
-- Python 3.11+
-- PostgreSQL 16+
-- Redis 7.2+
-- TimescaleDB extension for PostgreSQL
+- **Framework**: FastAPI (async Python web framework)
+- **Database**: PostgreSQL with TimescaleDB extension
+- **ORM**: SQLAlchemy 2.0 with async support
+- **Authentication**: JWT tokens with refresh mechanism
+- **Task Queue**: Celery with Redis
+- **API Documentation**: Automatic OpenAPI/Swagger
 
-### Installation
-
-```bash
-# 1. Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# 2. Install dependencies
-pip install -r requirements.txt
-
-# 3. Copy environment file and configure
-cp .env.example .env
-# Edit .env with your configuration
-
-# 4. Initialize database
-python scripts/init_db.py
-
-# 5. Run migrations
-alembic upgrade head
-
-# 6. Start the server
-python -m app.main
-```
-
-### Development Mode
-
-```bash
-# Run with auto-reload
-uvicorn app.main:app --reload --port 8000
-
-# Or using the convenience script
-python -m app.main
-```
-
-## 📚 API Documentation
-
-Once running, access:
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
-- Health Check: `http://localhost:8000/health`
-
-## 🏗️ Project Structure
+## 📁 Project Structure
 
 ```
 backend/
-├── app/
-│   ├── __init__.py
-│   ├── main.py              # FastAPI application
-│   ├── config.py            # Configuration management
-│   ├── database.py          # Database connection
-│   │
-│   ├── api/                 # API routes
-│   │   └── v1/
-│   │       ├── auth.py
-│   │       ├── health.py
+├── app/                      # Main application code
+│   ├── api/                  # API endpoints
+│   │   └── v1/              # API version 1
+│   │       ├── auth.py      # Authentication endpoints
+│   │       ├── risk.py      # Risk management endpoints
+│   │       ├── audit.py     # Audit log endpoints
 │   │       └── ...
-│   │
-│   ├── models/              # SQLAlchemy models
-│   │   ├── user.py
-│   │   ├── order.py
+│   ├── models/              # Database models
+│   │   ├── user.py          # User model
+│   │   ├── order.py         # Order model
+│   │   ├── position.py      # Position model
 │   │   └── ...
-│   │
-│   ├── schemas/             # Pydantic schemas
-│   ├── services/            # Business logic
-│   ├── brokers/             # Broker integrations
-│   ├── strategies/          # Trading strategies
-│   └── utils/               # Utilities
-│
+│   ├── services/            # Business logic services
+│   │   ├── auth_service.py  # Authentication service
+│   │   ├── risk_manager.py  # Risk management service
+│   │   └── ...
+│   ├── config.py            # Configuration management
+│   ├── database.py          # Database setup
+│   └── main.py              # Application entry point
 ├── alembic/                 # Database migrations
-├── tests/                   # Test suites
+├── tests/                   # Test suite
+│   ├── unit/               # Unit tests
+│   ├── integration/        # Integration tests
+│   └── conftest.py         # Test configuration
 ├── scripts/                 # Utility scripts
-├── requirements.txt
-└── README.md
+├── requirements.txt         # Python dependencies
+├── pyproject.toml          # Project configuration
+└── .env.example            # Environment variables example
 ```
 
-## 🔐 SEBI Compliance
+## 🚀 Setup
 
-This platform implements all required SEBI compliance measures:
+### Prerequisites
 
-- ✅ OAuth-based authentication (no password storage for broker access)
-- ✅ Two-factor authentication for API access
-- ✅ Static IP whitelisting
-- ✅ Complete audit trail (7-year retention)
-- ✅ Order tagging with unique algo identifier
-- ✅ Orders Per Second (OPS) tracking and limiting
-- ✅ Multi-layer risk controls
+- Python 3.10+
+- PostgreSQL 14+
+- Redis 6+
+- Virtual environment tool (venv, virtualenv, etc.)
 
-## 🛡️ Risk Management
+### Installation
 
-Built-in risk controls:
-- Position size limits
-- Daily loss limits
-- Stop loss mechanisms
-- Maximum drawdown monitoring
-- Emergency kill switch
-- Circuit breakers
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd trade-desk/backend
+   ```
 
-## 🔧 Configuration
+2. **Create virtual environment**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
 
-Key environment variables (see `.env.example`):
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-```bash
-# Database
-DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/algotrading
+4. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
 
-# JWT
-JWT_SECRET_KEY=your-secret-key
+5. **Initialize database**
+   ```bash
+   # Run migrations
+   alembic upgrade head
+   
+   # Or initialize directly (development only)
+   python scripts/init_db.py
+   ```
 
-# Broker API Keys
-ZERODHA_API_KEY=your-api-key
-GROWW_API_KEY=your-api-key
-
-# Risk Management
-MAX_POSITION_VALUE=50000
-MAX_DAILY_LOSS=5000
-OPS_LIMIT=10
-```
+6. **Run the application**
+   ```bash
+   # Development
+   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   
+   # Production
+   gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker
+   ```
 
 ## 🧪 Testing
 
+### Run all tests
 ```bash
-# Run all tests
 pytest
+```
 
-# Run with coverage
+### Run with coverage
+```bash
 pytest --cov=app --cov-report=html
-
-# Run specific test types
-pytest tests/unit/
-pytest tests/integration/
-pytest tests/e2e/
 ```
 
-## 📊 Database Migrations
-
+### Run specific test types
 ```bash
-# Create new migration
-alembic revision --autogenerate -m "description"
+pytest -m unit          # Unit tests only
+pytest -m integration   # Integration tests only
+pytest -m "not slow"    # Skip slow tests
+```
 
-# Apply migrations
+## 🔧 Development
+
+### Code Quality
+
+We use several tools to maintain code quality:
+
+- **Black**: Code formatting
+  ```bash
+  black app/ tests/
+  ```
+
+- **Ruff**: Fast linting
+  ```bash
+  ruff check app/ tests/
+  ruff check --fix app/ tests/  # Auto-fix issues
+  ```
+
+- **MyPy**: Type checking
+  ```bash
+  mypy app/
+  ```
+
+### Pre-commit Hooks
+
+Install pre-commit hooks to run checks automatically:
+```bash
+pre-commit install
+pre-commit run --all-files  # Run on all files
+```
+
+### Database Migrations
+
+Create a new migration:
+```bash
+alembic revision --autogenerate -m "Description of change"
+```
+
+Apply migrations:
+```bash
 alembic upgrade head
-
-# Rollback migration
-alembic downgrade -1
-
-# View migration history
-alembic history
 ```
 
-## 🚀 Deployment
+Rollback migration:
+```bash
+alembic downgrade -1
+```
+
+## 📡 API Documentation
+
+When running in development mode, API documentation is available at:
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+- OpenAPI JSON: http://localhost:8000/openapi.json
+
+## 🔒 Security
+
+- All sensitive data is encrypted using Fernet encryption
+- JWT tokens for authentication with automatic refresh
+- Rate limiting on API endpoints
+- CORS configuration for frontend integration
+- Request validation using Pydantic models
+- SQL injection protection via SQLAlchemy ORM
+
+## 📊 Monitoring
+
+- Health check endpoint: `/health`
+- Prometheus metrics: Port 9090 (when configured)
+- Structured logging with correlation IDs
+- Audit trail for all operations
+
+## 🚦 Environment Variables
+
+Key environment variables (see `.env.example` for full list):
 
 ```bash
-# Production mode
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+# Application
+APP_NAME=TradeDesk
+APP_ENV=development
+SECRET_KEY=your-secret-key
 
-# With Gunicorn
-gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000
+# Database
+DATABASE_URL=postgresql+asyncpg://user:pass@localhost/dbname
+
+# Redis
+REDIS_URL=redis://localhost:6379/0
+
+# JWT
+JWT_SECRET_KEY=your-jwt-secret
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES=15
+JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
+
+# Encryption
+ENCRYPTION_KEY=your-fernet-key
+
+# SEBI Compliance
+STATIC_IP=your-static-ip
+MAX_DAILY_TRADES=50
 ```
 
-## 📝 Development Status
+## 🤝 Contributing
 
-### ✅ Phase 0: Foundation (Current)
-- [x] FastAPI application structure
-- [x] Database models and migrations
-- [x] Basic API endpoints
-- [ ] Authentication system
-- [ ] Broker integration
+1. Create a feature branch
+2. Make your changes
+3. Run tests and linting
+4. Submit a pull request
 
-### 🚧 Phase 1: Core Features (Next)
-- [ ] Strategy plugin system
-- [ ] Backtesting engine
-- [ ] Paper trading
-- [ ] WebSocket streaming
+## 📄 License
 
-### 📋 Phase 2: Live Trading (Planned)
-- [ ] Order management
-- [ ] Risk controls
-- [ ] Live trading engine
-- [ ] Monitoring and alerts
-
-## 📞 Support
-
-For issues and questions, please refer to the main PRD documentation in `/docs`.
-
-## ⚠️ Disclaimer
-
-This is a personal trading platform. Use at your own risk. No financial advice is provided.
-
+Proprietary - See LICENSE file for details

@@ -1,6 +1,13 @@
 """
-Zerodha Testing Endpoints
-For testing Zerodha API integration (Development only)
+Broker Integration API Endpoints
+
+This module provides endpoints for broker-specific operations including:
+- Testing broker connectivity
+- Fetching account information
+- Managing broker sessions
+- Development/debugging endpoints
+
+Note: Some endpoints are only available in development mode for security.
 """
 
 from fastapi import APIRouter, HTTPException, Query
