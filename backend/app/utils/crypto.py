@@ -13,6 +13,9 @@ def _get_cipher() -> Fernet:
     key = settings.ENCRYPTION_KEY
     if not key:
         raise ValueError("ENCRYPTION_KEY is not configured in environment")
+    # Ensure key is bytes
+    if isinstance(key, str):
+        key = key.encode('utf-8')
     return Fernet(key)
 
 
