@@ -49,11 +49,17 @@ async def _store_broker_session(
     refresh_token = session_data.get("refresh_token")
     refresh_token_encrypted = encrypt(refresh_token) if refresh_token else None
     public_token = session_data.get("public_token")
-    meta = {
-        k: v
-        for k, v in session_data.items()
-        if k not in {"access_token", "refresh_token"}
-    }
+    
+    # Convert meta data, handling datetime objects
+    meta = {}
+    for k, v in session_data.items():
+        if k not in {"access_token", "refresh_token"}:
+            # Convert datetime objects to ISO format strings
+            if isinstance(v, datetime):
+                meta[k] = v.isoformat()
+            else:
+                meta[k] = v
+    
     expires_at = _calculate_zerodha_expiry()
     now_utc = datetime.now(timezone.utc)
     
