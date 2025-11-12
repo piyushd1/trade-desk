@@ -15,7 +15,7 @@ import asyncio
 
 from app.config import settings
 from app.database import init_db, close_db
-from app.api.v1 import api_router
+from app.routes import api_router
 from app.services.token_refresh_service import token_refresh_service
 from app.services.audit_service import audit_service
 

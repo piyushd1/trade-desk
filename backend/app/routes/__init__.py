@@ -4,7 +4,7 @@ Aggregates all v1 API routes
 """
 
 from fastapi import APIRouter
-from app.api.v1 import health, auth, zerodha_test, audit, risk
+from . import health, auth, zerodha_test, audit, risk
 
 api_router = APIRouter()
 
