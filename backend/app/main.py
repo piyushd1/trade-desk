@@ -24,7 +24,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import JSONResponse, ORJSONResponse
+from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.v1 import api_router
@@ -205,7 +205,7 @@ app = FastAPI(
     docs_url="/docs" if settings.DEBUG else None,  # Disable in production
     redoc_url="/redoc" if settings.DEBUG else None,  # Disable in production
     openapi_url="/openapi.json" if settings.DEBUG else None,  # Disable in production
-    default_response_class=ORJSONResponse,  # Faster JSON serialization
+    # default_response_class=ORJSONResponse,  # Faster JSON serialization
     lifespan=lifespan,
 )
 

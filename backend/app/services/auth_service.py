@@ -6,20 +6,16 @@ Handles user authentication, JWT tokens, and password hashing
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-from passlib.context import CryptContext
+
 import bcrypt
 from jose import JWTError, jwt
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.models import User
 
 logger = logging.getLogger(__name__)
-
-# Password hashing
-# Use bcrypt directly to avoid passlib version issues
-# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class AuthService:

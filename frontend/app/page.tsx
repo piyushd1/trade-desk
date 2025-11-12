@@ -84,13 +84,6 @@ export default function Home() {
               )}
             </Button>
           </form>
-          
-          <div className="mt-4 text-center text-sm text-gray-600">
-            <p>Default credentials:</p>
-            <p className="font-mono text-xs mt-1">
-              Username: <strong>admin</strong> | Password: <strong>Admin@123</strong>
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>
