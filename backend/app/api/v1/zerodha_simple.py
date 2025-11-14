@@ -14,27 +14,18 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
+from app.api.v1.auth import get_current_user_dependency
 from app.api.v1.zerodha_common import (
     decrypt_access_token,
-    get_active_zerodha_session,
     get_kite_client,
+    validate_user_owns_session,
 )
 from app.database import get_db
+from app.models.user import User
 import logging
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-
-
-async def _get_kite_client_for_identifier(
-    user_identifier: str, db: AsyncSession
-):
-    """
-    Fetch an authenticated KiteConnect client for the given broker session.
-    """
-    session = await get_active_zerodha_session(db, user_identifier)
-    access_token = decrypt_access_token(session)
-    return get_kite_client(access_token)
 
 
 def _success(data, **extra):
@@ -51,11 +42,16 @@ def _error(message: str):
 
 @router.get("/zerodha/profile")
 async def get_profile(
+    current_user: User = Depends(get_current_user_dependency),
     user_identifier: str = Query(..., description="Zerodha OAuth user identifier"),
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        kite = await _get_kite_client_for_identifier(user_identifier, db)
+        # Validate user owns this session
+        session = await validate_user_owns_session(current_user, user_identifier, db)
+        access_token = decrypt_access_token(session)
+        kite = get_kite_client(access_token)
+        
         profile = await run_in_threadpool(kite.profile)
         return _success(profile)
     except HTTPException:
@@ -67,11 +63,15 @@ async def get_profile(
 
 @router.get("/zerodha/margins")
 async def get_margins(
+    current_user: User = Depends(get_current_user_dependency),
     user_identifier: str = Query(..., description="Zerodha OAuth user identifier"),
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        kite = await _get_kite_client_for_identifier(user_identifier, db)
+        session = await validate_user_owns_session(current_user, user_identifier, db)
+        access_token = decrypt_access_token(session)
+        kite = get_kite_client(access_token)
+        
         margins = await run_in_threadpool(kite.margins)
         return _success(margins)
     except HTTPException:
