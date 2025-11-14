@@ -83,11 +83,15 @@ async def get_margins(
 
 @router.get("/zerodha/holdings")
 async def get_holdings(
+    current_user: User = Depends(get_current_user_dependency),
     user_identifier: str = Query(..., description="Zerodha OAuth user identifier"),
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        kite = await _get_kite_client_for_identifier(user_identifier, db)
+        session = await validate_user_owns_session(current_user, user_identifier, db)
+        access_token = decrypt_access_token(session)
+        kite = get_kite_client(access_token)
+        
         holdings = await run_in_threadpool(kite.holdings)
         return _success(holdings)
     except HTTPException:
@@ -99,11 +103,15 @@ async def get_holdings(
 
 @router.get("/zerodha/positions")
 async def get_positions(
+    current_user: User = Depends(get_current_user_dependency),
     user_identifier: str = Query(..., description="Zerodha OAuth user identifier"),
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        kite = await _get_kite_client_for_identifier(user_identifier, db)
+        session = await validate_user_owns_session(current_user, user_identifier, db)
+        access_token = decrypt_access_token(session)
+        kite = get_kite_client(access_token)
+        
         positions = await run_in_threadpool(kite.positions)
         return _success(positions)
     except HTTPException:
@@ -115,11 +123,15 @@ async def get_positions(
 
 @router.get("/zerodha/orders")
 async def get_orders(
+    current_user: User = Depends(get_current_user_dependency),
     user_identifier: str = Query(..., description="Zerodha OAuth user identifier"),
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        kite = await _get_kite_client_for_identifier(user_identifier, db)
+        session = await validate_user_owns_session(current_user, user_identifier, db)
+        access_token = decrypt_access_token(session)
+        kite = get_kite_client(access_token)
+        
         orders = await run_in_threadpool(kite.orders)
         return _success(orders)
     except HTTPException:
@@ -131,11 +143,15 @@ async def get_orders(
 
 @router.get("/zerodha/trades")
 async def get_trades(
+    current_user: User = Depends(get_current_user_dependency),
     user_identifier: str = Query(..., description="Zerodha OAuth user identifier"),
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        kite = await _get_kite_client_for_identifier(user_identifier, db)
+        session = await validate_user_owns_session(current_user, user_identifier, db)
+        access_token = decrypt_access_token(session)
+        kite = get_kite_client(access_token)
+        
         trades = await run_in_threadpool(kite.trades)
         return _success(trades)
     except HTTPException:
@@ -147,12 +163,16 @@ async def get_trades(
 
 @router.post("/zerodha/quote")
 async def get_quote(
+    current_user: User = Depends(get_current_user_dependency),
     user_identifier: str = Query(..., description="Zerodha OAuth user identifier"),
     instruments: List[str] = Body(..., description='List like ["NSE:INFY"]'),
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        kite = await _get_kite_client_for_identifier(user_identifier, db)
+        session = await validate_user_owns_session(current_user, user_identifier, db)
+        access_token = decrypt_access_token(session)
+        kite = get_kite_client(access_token)
+        
         quote = await run_in_threadpool(kite.quote, instruments)
         return _success(quote)
     except HTTPException:
@@ -164,12 +184,16 @@ async def get_quote(
 
 @router.post("/zerodha/ltp")
 async def get_ltp(
+    current_user: User = Depends(get_current_user_dependency),
     user_identifier: str = Query(..., description="Zerodha OAuth user identifier"),
     instruments: List[str] = Body(..., description='List like ["NSE:INFY"]'),
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        kite = await _get_kite_client_for_identifier(user_identifier, db)
+        session = await validate_user_owns_session(current_user, user_identifier, db)
+        access_token = decrypt_access_token(session)
+        kite = get_kite_client(access_token)
+        
         ltp = await run_in_threadpool(kite.ltp, instruments)
         return _success(ltp)
     except HTTPException:
@@ -181,12 +205,16 @@ async def get_ltp(
 
 @router.post("/zerodha/ohlc")
 async def get_ohlc(
+    current_user: User = Depends(get_current_user_dependency),
     user_identifier: str = Query(..., description="Zerodha OAuth user identifier"),
     instruments: List[str] = Body(..., description='List like ["NSE:INFY"]'),
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        kite = await _get_kite_client_for_identifier(user_identifier, db)
+        session = await validate_user_owns_session(current_user, user_identifier, db)
+        access_token = decrypt_access_token(session)
+        kite = get_kite_client(access_token)
+        
         ohlc = await run_in_threadpool(kite.ohlc, instruments)
         return _success(ohlc)
     except HTTPException:
@@ -198,12 +226,16 @@ async def get_ohlc(
 
 @router.get("/zerodha/instruments")
 async def get_instruments(
+    current_user: User = Depends(get_current_user_dependency),
     user_identifier: str = Query(..., description="Zerodha OAuth user identifier"),
     exchange: Optional[str] = Query(None, description="Optional exchange filter (NSE, BSE, NFO, etc.)"),
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        kite = await _get_kite_client_for_identifier(user_identifier, db)
+        session = await validate_user_owns_session(current_user, user_identifier, db)
+        access_token = decrypt_access_token(session)
+        kite = get_kite_client(access_token)
+        
         if exchange:
             instruments = await run_in_threadpool(kite.instruments, exchange)
         else:
@@ -220,6 +252,7 @@ async def get_instruments(
 @router.get("/zerodha/historical/{instrument_token}")
 async def get_historical(
     instrument_token: int,
+    current_user: User = Depends(get_current_user_dependency),
     user_identifier: str = Query(..., description="Zerodha OAuth user identifier"),
     from_date: date = Query(..., description="Start date"),
     to_date: date = Query(..., description="End date"),
@@ -229,7 +262,10 @@ async def get_historical(
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        kite = await _get_kite_client_for_identifier(user_identifier, db)
+        session = await validate_user_owns_session(current_user, user_identifier, db)
+        access_token = decrypt_access_token(session)
+        kite = get_kite_client(access_token)
+        
         candles = await run_in_threadpool(
             kite.historical_data,
             instrument_token,

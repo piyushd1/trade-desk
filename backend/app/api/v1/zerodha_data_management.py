@@ -13,12 +13,14 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.api.v1.auth import get_current_user_dependency
 from app.api.v1.zerodha_common import (
     decrypt_access_token,
-    get_active_zerodha_session,
     get_kite_client,
+    validate_user_owns_session,
 )
 from app.database import get_db
+from app.models.user import User
 from app.services.zerodha_data_service import (
     cleanup_historical_data,
     fetch_and_store_historical_data,
@@ -78,9 +80,11 @@ class HistoricalCleanupRequest(BaseModel):
 
 @router.post("/instruments/sync", summary="Sync instruments from Zerodha")
 async def instruments_sync(
-    request: InstrumentSyncRequest, db: AsyncSession = Depends(get_db)
+    request: InstrumentSyncRequest,
+    current_user: User = Depends(get_current_user_dependency),
+    db: AsyncSession = Depends(get_db)
 ):
-    session = await get_active_zerodha_session(db, request.user_identifier)
+    session = await validate_user_owns_session(current_user, request.user_identifier, db)
     access_token = decrypt_access_token(session)
     kite = get_kite_client(access_token)
 
@@ -128,9 +132,11 @@ async def instrument_detail(
 
 @router.post("/historical/fetch", summary="Fetch & store historical data")
 async def historical_fetch(
-    request: HistoricalFetchRequest, db: AsyncSession = Depends(get_db)
+    request: HistoricalFetchRequest,
+    current_user: User = Depends(get_current_user_dependency),
+    db: AsyncSession = Depends(get_db)
 ):
-    session = await get_active_zerodha_session(db, request.user_identifier)
+    session = await validate_user_owns_session(current_user, request.user_identifier, db)
     access_token = decrypt_access_token(session)
     kite = get_kite_client(access_token)
 
@@ -186,8 +192,11 @@ async def historical_stats(
 
 @router.delete("/historical/cleanup", summary="Cleanup stored historical data")
 async def historical_cleanup(
-    request: HistoricalCleanupRequest, db: AsyncSession = Depends(get_db)
+    request: HistoricalCleanupRequest,
+    current_user: User = Depends(get_current_user_dependency),
+    db: AsyncSession = Depends(get_db)
 ):
+    # Note: Cleanup doesn't require Zerodha session validation, only JWT auth
     count = await cleanup_historical_data(
         db=db,
         instrument_token=request.instrument_token,
