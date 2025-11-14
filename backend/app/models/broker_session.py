@@ -6,7 +6,8 @@ Stores broker access tokens securely for each user
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, JSON, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Text, DateTime, JSON, UniqueConstraint, ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.database import Base
@@ -23,6 +24,7 @@ class BrokerSession(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_identifier = Column(String(100), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=True, index=True)
     broker = Column(String(50), nullable=False, index=True)
     access_token_encrypted = Column(Text, nullable=False)
     refresh_token_encrypted = Column(Text)
@@ -32,6 +34,9 @@ class BrokerSession(Base):
     expires_at = Column(DateTime(timezone=True))
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    
+    # Relationship to User model
+    user = relationship("User", back_populates="broker_sessions")
 
     def __repr__(self) -> str:
         return f"<BrokerSession(user={self.user_identifier}, broker={self.broker}, status={self.status})>"

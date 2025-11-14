@@ -53,6 +53,7 @@ class User(Base):
     
     # Relationships
     broker_connections = relationship("BrokerConnection", back_populates="user", cascade="all, delete-orphan")
+    broker_sessions = relationship("BrokerSession", back_populates="user", cascade="all, delete-orphan")
     strategy_instances = relationship("StrategyInstance", back_populates="user", cascade="all, delete-orphan")
     orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
     positions = relationship("Position", back_populates="user", cascade="all, delete-orphan")
