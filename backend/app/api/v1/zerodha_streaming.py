@@ -17,12 +17,14 @@ from kiteconnect import KiteConnect
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
+from app.api.v1.auth import get_current_user_dependency
 from app.api.v1.zerodha_common import (
     decrypt_access_token,
-    get_active_zerodha_session,
     get_kite_client,
+    validate_user_owns_session,
 )
 from app.database import get_db
+from app.models.user import User
 from app.services.zerodha_streaming_service import zerodha_streaming_manager
 
 router = APIRouter(prefix="/zerodha", tags=["Zerodha Data Streaming"])
@@ -142,10 +144,12 @@ async def _resolve_instrument_tokens(
 
 @router.post("/stream/start", summary="Start Zerodha data stream")
 async def start_stream(
-    request: StartStreamRequest, db: AsyncSession = Depends(get_db)
+    request: StartStreamRequest,
+    current_user: User = Depends(get_current_user_dependency),
+    db: AsyncSession = Depends(get_db)
 ):
     """Start streaming real-time ticks for the specified user and instruments."""
-    session = await get_active_zerodha_session(db, request.user_identifier)
+    session = await validate_user_owns_session(current_user, request.user_identifier, db)
     access_token = decrypt_access_token(session)
 
     kite = get_kite_client(access_token)
@@ -172,8 +176,15 @@ async def start_stream(
 
 
 @router.post("/stream/stop", summary="Stop Zerodha data stream")
-async def stop_stream(request: StopStreamRequest):
+async def stop_stream(
+    request: StopStreamRequest,
+    current_user: User = Depends(get_current_user_dependency),
+    db: AsyncSession = Depends(get_db)
+):
     """Stop streaming for the specified user."""
+    # Validate ownership before stopping stream
+    await validate_user_owns_session(current_user, request.user_identifier, db)
+    
     stopped = await run_in_threadpool(
         zerodha_streaming_manager.stop_stream, request.user_identifier
     )
@@ -187,10 +198,12 @@ async def stop_stream(request: StopStreamRequest):
 
 @router.post("/stream/update", summary="Update streaming subscription")
 async def update_subscription(
-    request: UpdateSubscriptionRequest, db: AsyncSession = Depends(get_db)
+    request: UpdateSubscriptionRequest,
+    current_user: User = Depends(get_current_user_dependency),
+    db: AsyncSession = Depends(get_db)
 ):
     """Update subscribed instruments for an active stream."""
-    session = await get_active_zerodha_session(db, request.user_identifier)
+    session = await validate_user_owns_session(current_user, request.user_identifier, db)
     access_token = decrypt_access_token(session)
 
     kite = get_kite_client(access_token)
@@ -210,9 +223,15 @@ async def update_subscription(
 
 @router.get("/stream/status", summary="Streaming status & metrics")
 async def stream_status(
+    current_user: User = Depends(get_current_user_dependency),
     user_identifier: Optional[str] = Query(None, description="Optional user identifier filter"),
+    db: AsyncSession = Depends(get_db)
 ):
     """Retrieve streaming status and metrics."""
+    # If user_identifier provided, validate ownership
+    if user_identifier:
+        await validate_user_owns_session(current_user, user_identifier, db)
+    
     status_payload = await run_in_threadpool(
         zerodha_streaming_manager.get_status, user_identifier
     )
@@ -226,10 +245,15 @@ async def stream_status(
 
 @router.get("/stream/ticks", summary="Recent ticks from stream")
 async def stream_ticks(
+    current_user: User = Depends(get_current_user_dependency),
     user_identifier: str = Query(..., description="User identifier"),
     limit: int = Query(50, ge=1, le=500, description="Maximum number of ticks to return"),
+    db: AsyncSession = Depends(get_db)
 ):
     """Return the most recent ticks captured by the streaming service."""
+    # Validate ownership
+    await validate_user_owns_session(current_user, user_identifier, db)
+    
     try:
         ticks = await run_in_threadpool(
             zerodha_streaming_manager.get_ticks, user_identifier, limit
@@ -241,11 +265,12 @@ async def stream_ticks(
 
 @router.get("/session/status", response_model=SessionStatusResponse, summary="Zerodha session status")
 async def session_status(
+    current_user: User = Depends(get_current_user_dependency),
     user_identifier: str = Query(..., description="User identifier"),
     db: AsyncSession = Depends(get_db),
 ):
     """Return stored session information (without decrypting tokens)."""
-    session = await get_active_zerodha_session(db, user_identifier)
+    session = await validate_user_owns_session(current_user, user_identifier, db)
 
     expires_at = session.expires_at.isoformat() if session.expires_at else None
     expires_in_minutes = None
@@ -265,13 +290,14 @@ async def session_status(
 
 @router.post("/session/validate", response_model=SessionValidationResponse, summary="Validate Zerodha access token")
 async def session_validate(
+    current_user: User = Depends(get_current_user_dependency),
     user_identifier: str = Query(..., description="User identifier"),
     db: AsyncSession = Depends(get_db),
 ):
     """
     Validate that the stored access token is currently usable by fetching the user profile.
     """
-    session = await get_active_zerodha_session(db, user_identifier)
+    session = await validate_user_owns_session(current_user, user_identifier, db)
 
     access_token = decrypt_access_token(session)
     kite = get_kite_client(access_token)

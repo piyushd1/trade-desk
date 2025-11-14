@@ -100,6 +100,7 @@ def _mask_token(token: str) -> str:
 async def _store_broker_session(
     db: AsyncSession,
     user_identifier: str,
+    user_id: int,
     broker: str,
     session_data: Dict
 ) -> BrokerSession:
@@ -135,6 +136,7 @@ async def _store_broker_session(
     broker_session = result.scalar_one_or_none()
 
     if broker_session:
+        broker_session.user_id = user_id
         broker_session.access_token_encrypted = encrypted_token
         if refresh_token_encrypted:
             broker_session.refresh_token_encrypted = refresh_token_encrypted
@@ -147,6 +149,7 @@ async def _store_broker_session(
     else:
         broker_session = BrokerSession(
             user_identifier=user_identifier,
+            user_id=user_id,
             broker=broker,
             access_token_encrypted=encrypted_token,
             refresh_token_encrypted=refresh_token_encrypted,
@@ -521,14 +524,18 @@ async def get_current_user(
 
 @router.get("/zerodha/connect")
 async def zerodha_oauth_initiate(
-    request: Request,
+    current_user: User = Depends(get_current_user_dependency),
+    request: Request = None,
     state: Optional[str] = Query(
         default=None,
         description="Optional user identifier to track session (e.g., username, email, or friend name)"
-    )
+    ),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Initiate Zerodha OAuth flow
+    
+    Requires JWT authentication. The Zerodha session will be linked to the current user.
     
     Returns:
         dict: Login URL for Zerodha Kite Connect
@@ -547,10 +554,12 @@ async def zerodha_oauth_initiate(
         action="oauth_initiate",
         entity_type="broker_connection",
         entity_id=state or "anonymous",
-        details={"broker": "zerodha", "state": state},
-        username=state,
-        ip_address=request.client.host if request.client else None,
-        user_agent=request.headers.get("user-agent"),
+        details={"broker": "zerodha", "state": state, "user_id": current_user.id},
+        user_id=current_user.id,
+        username=current_user.username,
+        ip_address=request.client.host if request and request.client else None,
+        user_agent=request.headers.get("user-agent") if request else None,
+        db=db
     )
     
     return {
@@ -561,7 +570,8 @@ async def zerodha_oauth_initiate(
             "1. Open the login_url in browser",
             "2. Login with Zerodha credentials",
             "3. Authorize the app",
-            "4. You'll be redirected to callback URL with request_token"
+            "4. You'll be redirected to callback URL with request_token",
+            "5. Note: You must be logged in when callback happens (session cookie)"
         ],
         "state": state,
     }
@@ -570,6 +580,7 @@ async def zerodha_oauth_initiate(
 @router.get("/zerodha/callback")
 async def zerodha_oauth_callback(
     request: Request,
+    current_user: User = Depends(get_current_user_dependency),
     request_token: Optional[str] = None,
     status: Optional[str] = None,
     action: Optional[str] = None,
@@ -580,6 +591,7 @@ async def zerodha_oauth_callback(
     Handle Zerodha OAuth callback
     
     This endpoint receives the redirect from Zerodha after user authorization.
+    Requires JWT authentication - the session will be linked to the authenticated user.
     
     Query Parameters:
         request_token: Token to exchange for access_token
@@ -627,6 +639,7 @@ async def zerodha_oauth_callback(
         broker_session = await _store_broker_session(
             db=db,
             user_identifier=user_identifier,
+            user_id=current_user.id,
             broker="zerodha",
             session_data=session_data,
         )
@@ -790,7 +803,8 @@ async def get_zerodha_session(
 
 @router.post("/zerodha/refresh")
 async def manual_refresh_zerodha_token(
-    request: Request,
+    current_user: User = Depends(get_current_user_dependency),
+    request: Request = None,
     user_identifier: Optional[str] = Query(
         default=None,
         description="User identifier for the session to refresh"
@@ -801,23 +815,19 @@ async def manual_refresh_zerodha_token(
     Manually refresh Zerodha access token for a user session
     
     This endpoint allows manual triggering of token refresh for a specific user.
+    Requires JWT authentication and validates session ownership.
     Useful for testing or when auto-refresh fails.
     
     Returns:
         dict: Refresh operation result
     """
     from app.services.token_refresh_service import token_refresh_service
+    from app.api.v1.zerodha_common import validate_user_owns_session
     
     identifier = user_identifier or "default"
     
-    # Find the session
-    result = await db.execute(
-        select(BrokerSession).where(
-            BrokerSession.user_identifier == identifier,
-            BrokerSession.broker == "zerodha",
-        )
-    )
-    session = result.scalar_one_or_none()
+    # Validate user owns this session
+    session = await validate_user_owns_session(current_user, identifier, db)
     
     if not session:
         # Log failed manual refresh attempt

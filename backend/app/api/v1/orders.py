@@ -14,12 +14,14 @@ from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
+from app.api.v1.auth import get_current_user_dependency
 from app.api.v1.zerodha_common import (
     decrypt_access_token,
-    get_active_zerodha_session,
     get_kite_client,
+    validate_user_owns_session,
 )
 from app.database import get_db
+from app.models.user import User
 from app.services.zerodha_order_service import (
     cancel_order,
     modify_order,
@@ -111,9 +113,11 @@ async def _ensure_price_for_risk(
 
 @router.post("/preview", summary="Preview order with risk checks")
 async def preview_order_endpoint(
-    request: OrderPreviewRequest, db: AsyncSession = Depends(get_db)
+    request: OrderPreviewRequest,
+    current_user: User = Depends(get_current_user_dependency),
+    db: AsyncSession = Depends(get_db)
 ):
-    session = await get_active_zerodha_session(db, request.user_identifier)
+    session = await validate_user_owns_session(current_user, request.user_identifier, db)
     access_token = decrypt_access_token(session)
     kite = get_kite_client(access_token)
 
@@ -146,9 +150,11 @@ async def preview_order_endpoint(
 
 @router.post("/place", summary="Place order after risk checks")
 async def place_order_endpoint(
-    request: OrderPlaceRequest, db: AsyncSession = Depends(get_db)
+    request: OrderPlaceRequest,
+    current_user: User = Depends(get_current_user_dependency),
+    db: AsyncSession = Depends(get_db)
 ):
-    session = await get_active_zerodha_session(db, request.user_identifier)
+    session = await validate_user_owns_session(current_user, request.user_identifier, db)
     access_token = decrypt_access_token(session)
     kite = get_kite_client(access_token)
 
@@ -194,9 +200,11 @@ async def place_order_endpoint(
 
 @router.post("/modify", summary="Modify an existing order")
 async def modify_order_endpoint(
-    request: OrderModifyRequest, db: AsyncSession = Depends(get_db)
+    request: OrderModifyRequest,
+    current_user: User = Depends(get_current_user_dependency),
+    db: AsyncSession = Depends(get_db)
 ):
-    session = await get_active_zerodha_session(db, request.user_identifier)
+    session = await validate_user_owns_session(current_user, request.user_identifier, db)
     access_token = decrypt_access_token(session)
     kite = get_kite_client(access_token)
 
@@ -215,9 +223,11 @@ async def modify_order_endpoint(
 
 @router.post("/cancel", summary="Cancel an order")
 async def cancel_order_endpoint(
-    request: OrderCancelRequest, db: AsyncSession = Depends(get_db)
+    request: OrderCancelRequest,
+    current_user: User = Depends(get_current_user_dependency),
+    db: AsyncSession = Depends(get_db)
 ):
-    session = await get_active_zerodha_session(db, request.user_identifier)
+    session = await validate_user_owns_session(current_user, request.user_identifier, db)
     access_token = decrypt_access_token(session)
     kite = get_kite_client(access_token)
 
