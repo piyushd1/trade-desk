@@ -1,0 +1,39 @@
+[Unit]
+Description=TradeDesk Frontend Service
+Documentation=https://github.com/piyushd1/trade-desk
+After=network.target
+
+[Service]
+Type=simple
+User=piyush_dev
+Group=piyush_dev
+WorkingDirectory=/home/trade-desk/frontend
+
+# Environment
+Environment="NODE_ENV=production"
+Environment="PORT=3001"
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+
+# Start command
+ExecStart=/usr/bin/npm run start
+
+# Restart policy
+Restart=always
+RestartSec=10
+
+# Resource limits
+LimitNOFILE=65535
+MemoryLimit=1G
+CPUQuota=80%
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=trade-desk-frontend
+
+[Install]
+WantedBy=multi-user.target

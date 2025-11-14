@@ -10,17 +10,28 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Optional, Dict
 from datetime import datetime, timedelta, timezone
+from pydantic import BaseModel, Field
 
 from app.database import get_db
 from app.config import settings
 from app.models import BrokerSession
 from app.utils.crypto import encrypt, decrypt
 from app.services.audit_service import audit_service
+from app.services.zerodha_service import zerodha_service
 from fastapi import Request
 
 router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+
+
+class ZerodhaCredentialsUpdate(BaseModel):
+    api_key: str = Field(..., min_length=5, description="Zerodha API key")
+    api_secret: str = Field(..., min_length=10, description="Zerodha API secret")
+    redirect_url: Optional[str] = Field(
+        default=None,
+        description="Optional override for Zerodha redirect URL",
+    )
 
 
 def _calculate_zerodha_expiry(now: Optional[datetime] = None) -> datetime:
@@ -284,6 +295,50 @@ async def refresh_token():
     }
 
 
+@router.post("/zerodha/config")
+async def update_zerodha_credentials(
+    payload: ZerodhaCredentialsUpdate,
+    request: Request,
+):
+    """Update Zerodha API credentials at runtime."""
+
+    api_key = payload.api_key.strip()
+    api_secret = payload.api_secret.strip()
+    redirect_url = payload.redirect_url.strip() if payload.redirect_url else None
+
+    if not api_key or not api_secret:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="API key and secret are required",
+        )
+
+    try:
+        zerodha_service.update_credentials(api_key, api_secret, redirect_url)
+    except Exception as exc:  # pragma: no cover - defensive
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to update Zerodha credentials: {exc}",
+        ) from exc
+
+    await audit_service.log_event(
+        action="broker_credentials_updated",
+        entity_type="broker_connection",
+        entity_id="zerodha",
+        details={
+            "redirect_url": redirect_url or zerodha_service.redirect_url,
+        },
+        username="system",
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+
+    return {
+        "status": "success",
+        "message": "Zerodha credentials updated",
+        "redirect_url": redirect_url or zerodha_service.redirect_url,
+    }
+
+
 @router.get("/me")
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     """
@@ -314,9 +369,14 @@ async def zerodha_oauth_initiate(
     Returns:
         dict: Login URL for Zerodha Kite Connect
     """
-    from app.services.zerodha_service import zerodha_service
     
-    login_url = zerodha_service.get_login_url(state)
+    try:
+        login_url = zerodha_service.get_login_url(state)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
     
     # Log audit event
     await audit_service.log_event(
@@ -365,7 +425,6 @@ async def zerodha_oauth_callback(
     Returns:
         dict: Session data with access_token
     """
-    from app.services.zerodha_service import zerodha_service
     
     # Check if authorization was successful
     if status != "success" or not request_token:
@@ -427,10 +486,21 @@ async def zerodha_oauth_callback(
             user_agent=request.headers.get("user-agent"),
             db=db
         )
-
-        # Redirect to frontend dashboard
-        frontend_url = settings.APP_URL or "https://piyushdev.com"
-        return RedirectResponse(url=f"{frontend_url}/dashboard?auth=success&user={user_identifier}")
+        return {
+            "status": "success",
+            "message": "Zerodha session stored successfully",
+            "user_identifier": user_identifier,
+            "session": {
+                "broker": broker_session.broker,
+                "expires_at": broker_session.expires_at.isoformat() if broker_session.expires_at else None,
+                "has_refresh_token": refresh_token is not None,
+                "meta": broker_session.meta,
+            },
+            "next_steps": [
+                f"Call /api/v1/auth/zerodha/session?user_identifier={user_identifier} to view the stored session",
+                f"Use user_identifier={user_identifier} with /api/v1/data/zerodha/* endpoints to fetch data",
+            ],
+        }
     else:
         # Log OAuth error
         await audit_service.log_event(
@@ -446,11 +516,15 @@ async def zerodha_oauth_callback(
             user_agent=request.headers.get("user-agent"),
             db=db
         )
-        
-        # Redirect to frontend with error
-        frontend_url = settings.APP_URL or "https://piyushdev.com"
         error_msg = session_data.get("message", "Unknown error")
-        return RedirectResponse(url=f"{frontend_url}/?error={error_msg}")
+        return {
+            "status": "error",
+            "message": error_msg,
+            "details": {
+                "user_identifier": state,
+                "broker": "zerodha",
+            },
+        }
 
 
 @router.post("/brokers/groww/connect")
@@ -478,23 +552,28 @@ async def broker_status(db: AsyncSession = Depends(get_db)):
     Returns:
         dict: Status of all broker connections
     """
-    # TODO: Check actual connection status from database
+    zerodha_configured = bool(zerodha_service.api_key and zerodha_service.api_secret)
+
     return {
         "status": "success",
         "brokers": {
             "zerodha": {
-                "configured": bool(settings.ZERODHA_API_KEY),
-                "api_key_set": bool(settings.ZERODHA_API_KEY),
-                "redirect_url": settings.ZERODHA_REDIRECT_URL,
-                "status": "configured" if settings.ZERODHA_API_KEY else "not_configured",
-                "message": "Ready for OAuth authentication" if settings.ZERODHA_API_KEY else "API key not configured"
+                "configured": zerodha_configured,
+                "api_key_set": bool(zerodha_service.api_key),
+                "redirect_url": zerodha_service.redirect_url,
+                "status": "configured" if zerodha_configured else "not_configured",
+                "message": (
+                    "Ready for OAuth authentication"
+                    if zerodha_configured
+                    else "Provide API key and secret to enable Zerodha"
+                ),
             },
             "groww": {
                 "configured": bool(settings.GROWW_API_KEY),
                 "status": "not_configured",
-                "message": "Not configured yet"
-            }
-        }
+                "message": "Not configured yet",
+            },
+        },
     }
 
 

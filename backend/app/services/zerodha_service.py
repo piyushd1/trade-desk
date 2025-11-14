@@ -26,7 +26,23 @@ class ZerodhaService:
         self.api_key = settings.ZERODHA_API_KEY
         self.api_secret = settings.ZERODHA_API_SECRET
         self.redirect_url = settings.ZERODHA_REDIRECT_URL
+        self.kite = KiteConnect(api_key=self.api_key) if self.api_key else None
+
+    def update_credentials(
+        self,
+        api_key: str,
+        api_secret: str,
+        redirect_url: Optional[str] = None,
+    ) -> None:
+        """Update Zerodha API credentials at runtime."""
+
+        self.api_key = api_key
+        self.api_secret = api_secret
+        if redirect_url:
+            self.redirect_url = redirect_url
+
         self.kite = KiteConnect(api_key=self.api_key)
+        logger.info("Zerodha credentials updated via API")
     
     def get_login_url(self, state: Optional[str] = None) -> str:
         """
@@ -35,6 +51,9 @@ class ZerodhaService:
         Returns:
             str: Login URL to redirect user to
         """
+        if not self.kite:
+            raise ValueError("Zerodha API key is not configured")
+
         login_url = self.kite.login_url()
         if state:
             # Append state parameter for tracking user sessions
@@ -55,6 +74,8 @@ class ZerodhaService:
             dict: Session data with access_token, user details, etc.
         """
         try:
+            if not self.kite or not self.api_secret:
+                raise ValueError("Zerodha API credentials are not configured")
             # Generate session using request token
             # Checksum = sha256(api_key + request_token + api_secret)
             data = self.kite.generate_session(
@@ -165,6 +186,8 @@ class ZerodhaService:
             dict: New session data with refreshed access_token
         """
         try:
+            if not self.api_key or not self.api_secret:
+                raise ValueError("Zerodha API credentials are not configured")
             # Create a new Kite instance for renewal
             kite = KiteConnect(api_key=self.api_key)
             

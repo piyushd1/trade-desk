@@ -107,11 +107,21 @@ export default function RiskManagementPage() {
           </div>
           
           {!tradingEnabled && (
-            <div className="flex items-center gap-2 rounded-lg bg-red-50 p-4 text-red-800">
-              <AlertTriangle className="h-5 w-5" />
-              <p className="text-sm font-medium">
-                Trading is currently disabled. Enable to resume operations.
-              </p>
+            <div className="space-y-3 rounded-lg bg-red-50 p-4 text-red-800">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5" />
+                <p className="text-sm font-medium">
+                  Trading is currently disabled. Enable to resume operations.
+                </p>
+              </div>
+              <Button
+                type="button"
+                className="w-full sm:w-auto"
+                onClick={() => handleKillSwitchToggle(true)}
+                disabled={toggleKillSwitch.isPending}
+              >
+                Enable Trading
+              </Button>
             </div>
           )}
         </CardContent>

@@ -1,0 +1,43 @@
+# TradeDesk Cron Configuration
+# 
+# Install with: crontab /home/trade-desk/deployment/cron/trade-desk.cron
+# View current crontab: crontab -l
+# Edit directly: crontab -e
+
+# Environment variables
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+MAILTO=""  # Set email for cron output
+
+# Base directory
+BASE_DIR=/home/trade-desk
+
+# Health Monitoring - Every 5 minutes
+*/5 * * * * $BASE_DIR/deployment/scripts/monitor.sh > /dev/null 2>&1
+
+# Database Backup - Daily at 2 AM
+0 2 * * * $BASE_DIR/deployment/scripts/backup.sh database >> $BASE_DIR/logs/backup.log 2>&1
+
+# Full Backup - Weekly on Sunday at 3 AM
+0 3 * * 0 $BASE_DIR/deployment/scripts/backup.sh full >> $BASE_DIR/logs/backup.log 2>&1
+
+# Log Rotation - Daily at 1 AM
+0 1 * * * find $BASE_DIR/logs -name "*.log" -mtime +30 -delete
+
+# SSL Certificate Renewal Check - Daily at 4 AM
+0 4 * * * /usr/bin/certbot renew --quiet --post-hook "systemctl reload nginx"
+
+# Clear Next.js Cache - Weekly on Sunday at 4 AM
+0 4 * * 0 rm -rf $BASE_DIR/frontend/.next/cache
+
+# Database Optimization - Weekly on Sunday at 5 AM
+0 5 * * 0 cd $BASE_DIR/backend && sqlite3 trade_desk.db "VACUUM; ANALYZE;" >> $BASE_DIR/logs/db-maintenance.log 2>&1
+
+# Generate Performance Report - Daily at 6 AM
+0 6 * * * $BASE_DIR/deployment/scripts/monitor.sh report >> $BASE_DIR/logs/performance.log 2>&1
+
+# Cleanup old backups - Daily at 7 AM
+0 7 * * * find $BASE_DIR/backups -name "*.tar.gz" -mtime +7 -delete
+
+# Redis Memory Report - Daily at 8 AM
+0 8 * * * redis-cli INFO memory >> $BASE_DIR/logs/redis-memory.log 2>&1

@@ -11,6 +11,7 @@ from app.models.position import Position
 from app.models.audit import AuditLog, RiskBreachLog, SystemEvent
 from app.models.broker_session import BrokerSession
 from app.models.risk_config import RiskConfig, DailyRiskMetrics
+from app.models.market_data import Instrument, HistoricalCandle
 
 __all__ = [
     "User",
@@ -26,5 +27,7 @@ __all__ = [
     "BrokerSession",
     "RiskConfig",
     "DailyRiskMetrics",
+    "Instrument",
+    "HistoricalCandle",
 ]
 

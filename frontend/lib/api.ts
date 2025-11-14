@@ -108,6 +108,17 @@ export interface RiskBreach {
   created_at: string;
 }
 
+export interface ZerodhaSessionResponse {
+  status: string;
+  session: BrokerSession | null;
+}
+
+export interface UpdateZerodhaConfigPayload {
+  apiKey: string;
+  apiSecret: string;
+  redirectUrl?: string;
+}
+
 // Auth API
 export const authApi = {
   getZerodhaLoginUrl: async (state?: string) => {
@@ -120,9 +131,31 @@ export const authApi = {
     const params = new URLSearchParams();
     if (userIdentifier) params.append('user_identifier', userIdentifier);
     if (includeToken) params.append('include_token', 'true');
-    const { data } = await api.get<ApiResponse<{ session: BrokerSession }>>(
-      `/auth/zerodha/session?${params}`
-    );
+
+    try {
+      const { data } = await api.get<ApiResponse<{ session: BrokerSession | null }>>(
+        `/auth/zerodha/session?${params}`
+      );
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return { status: 'not_found', session: null };
+      }
+      throw error;
+    }
+  },
+
+  updateZerodhaConfig: async ({ apiKey, apiSecret, redirectUrl }: UpdateZerodhaConfigPayload) => {
+    const payload: Record<string, string> = {
+      api_key: apiKey,
+      api_secret: apiSecret,
+    };
+
+    if (redirectUrl) {
+      payload.redirect_url = redirectUrl;
+    }
+
+    const { data } = await api.post('/auth/zerodha/config', payload);
     return data;
   },
 
@@ -257,7 +290,7 @@ export const auditApi = {
 // Health API
 export const healthApi = {
   check: async () => {
-    const { data } = await api.get('/health');
+    const { data } = await api.get('/health/status');
     return data;
   },
 };

@@ -1,14 +1,82 @@
 "use client";
 
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/hooks/use-auth";
+import { authApi } from "@/lib/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Settings as SettingsIcon, RefreshCw } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
-  const { session, refreshToken, brokerStatus, userIdentifier } = useAuth();
+  const queryClient = useQueryClient();
+  const { session, refreshToken, brokerStatus, userIdentifier, login } = useAuth();
+
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [apiSecretInput, setApiSecretInput] = useState("");
+  const [redirectUrlInput, setRedirectUrlInput] = useState<string>("");
+
+  const credentialsConfigured = brokerStatus?.zerodha?.configured ?? false;
+
+  const updateCredentials = useMutation({
+    mutationFn: authApi.updateZerodhaConfig,
+    onSuccess: () => {
+      toast.success("Zerodha credentials saved");
+      queryClient.invalidateQueries({ queryKey: ["broker-status"] });
+    },
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : "Failed to update Zerodha credentials";
+      toast.error(message);
+    },
+  });
+
+  const canAuthenticate = useMemo(() => {
+    return apiKeyInput.trim().length > 0 && apiSecretInput.trim().length > 0;
+  }, [apiKeyInput, apiSecretInput]);
+
+  useEffect(() => {
+    if (!redirectUrlInput && brokerStatus?.zerodha?.redirect_url) {
+      setRedirectUrlInput(brokerStatus.zerodha.redirect_url);
+    }
+  }, [brokerStatus?.zerodha?.redirect_url, redirectUrlInput]);
+
+  const generateState = useCallback(() => {
+    if (userIdentifier) {
+      return userIdentifier;
+    }
+
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+
+    return `user-${Date.now()}`;
+  }, [userIdentifier]);
+
+  const handleAuthenticate = useCallback(async () => {
+    if (!canAuthenticate) {
+      toast.error("Enter both API key and secret to continue");
+      return;
+    }
+
+    const apiKey = apiKeyInput.trim();
+    const apiSecret = apiSecretInput.trim();
+    const redirectUrl = redirectUrlInput.trim() || undefined;
+
+    try {
+      await updateCredentials.mutateAsync({ apiKey, apiSecret, redirectUrl });
+      setApiKeyInput("");
+      setApiSecretInput("");
+      const state = generateState();
+      await login(state);
+    } catch (error) {
+      // Errors are surfaced via mutation onError handler
+      console.error("Failed to authenticate Zerodha:", error);
+    }
+  }, [apiKeyInput, apiSecretInput, redirectUrlInput, canAuthenticate, updateCredentials, generateState, login]);
 
   const handleRefreshToken = () => {
     refreshToken();
@@ -42,6 +110,51 @@ export default function SettingsPage() {
             <Badge variant={session?.status === "active" ? "default" : "secondary"}>
               {session?.status || "Not connected"}
             </Badge>
+          </div>
+
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="zerodha-api-key">API Key</Label>
+              <Input
+                id="zerodha-api-key"
+                placeholder="Enter Zerodha API key"
+                autoComplete="off"
+                value={apiKeyInput}
+                onChange={(event) => setApiKeyInput(event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="zerodha-api-secret">API Secret</Label>
+              <Input
+                id="zerodha-api-secret"
+                type="password"
+                placeholder="Enter Zerodha API secret"
+                autoComplete="off"
+                value={apiSecretInput}
+                onChange={(event) => setApiSecretInput(event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="zerodha-redirect-url">Redirect URL (optional)</Label>
+              <Input
+                id="zerodha-redirect-url"
+                placeholder={brokerStatus?.zerodha?.redirect_url || "https://piyushdev.com/api/v1/auth/zerodha/callback"}
+                autoComplete="off"
+                value={redirectUrlInput}
+                onChange={(event) => setRedirectUrlInput(event.target.value)}
+              />
+            </div>
+            <Button
+              type="button"
+              className="w-full"
+              onClick={handleAuthenticate}
+              disabled={!canAuthenticate || updateCredentials.isPending}
+            >
+              {updateCredentials.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              {credentialsConfigured ? "Re-authenticate Zerodha" : "Authenticate Zerodha"}
+            </Button>
           </div>
 
           {session && (

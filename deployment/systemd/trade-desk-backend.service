@@ -1,0 +1,39 @@
+[Unit]
+Description=TradeDesk Backend Service
+Documentation=https://github.com/piyushd1/trade-desk
+After=network.target redis.service
+
+[Service]
+Type=simple
+User=piyush_dev
+Group=piyush_dev
+WorkingDirectory=/home/trade-desk/backend
+
+# Environment
+Environment="PATH=/home/trade-desk/backend/venv/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="PYTHONPATH=/home/trade-desk/backend"
+Environment="APP_ENV=production"
+
+# Start command
+ExecStart=/home/trade-desk/backend/venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1
+
+# Restart policy
+Restart=always
+RestartSec=10
+
+# Resource limits
+LimitNOFILE=65535
+MemoryLimit=1G
+CPUQuota=80%
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=trade-desk-backend
+
+[Install]
+WantedBy=multi-user.target

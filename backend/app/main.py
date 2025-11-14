@@ -32,6 +32,7 @@ from app.config import settings
 from app.database import check_db_connection, close_db, init_db
 from app.services.audit_service import audit_service
 from app.services.token_refresh_service import token_refresh_service
+from app.services.zerodha_streaming_service import zerodha_streaming_manager
 
 # Configure structured logging
 logging.basicConfig(
@@ -179,6 +180,13 @@ async def lifespan(app: FastAPI):
         if settings.ZERODHA_AUTO_REFRESH_ENABLED:
             token_refresh_service.stop()
             logger.info("✅ Token refresh service stopped")
+
+        # Stop any active Zerodha streams
+        try:
+            zerodha_streaming_manager.stop_all()
+            logger.info("✅ Zerodha streaming manager stopped")
+        except Exception as e:
+            shutdown_errors.append(f"Streaming manager stop failed: {e}")
 
         # Close database connections
         try:
