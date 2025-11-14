@@ -14,15 +14,62 @@ from pydantic import BaseModel, Field
 
 from app.database import get_db
 from app.config import settings
-from app.models import BrokerSession
+from app.models import BrokerSession, User
 from app.utils.crypto import encrypt, decrypt
 from app.services.audit_service import audit_service
 from app.services.zerodha_service import zerodha_service
+from app.services.auth_service import auth_service
 from fastapi import Request
 
 router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+
+
+# Dependency to get current authenticated user from JWT
+async def get_current_user_dependency(
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db)
+) -> User:
+    """
+    Dependency to extract and validate current user from JWT token
+    
+    Raises:
+        HTTPException: If token is invalid or user not found
+    
+    Returns:
+        User: Authenticated user object
+    """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Not authenticated",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    # Decode token
+    payload = auth_service.decode_token(token)
+    if payload is None:
+        raise credentials_exception
+    
+    # Extract user info
+    username: str = payload.get("sub")
+    user_id: int = payload.get("user_id")
+    
+    if username is None or user_id is None:
+        raise credentials_exception
+    
+    # Get user from database
+    user = await auth_service.get_user_by_id(user_id, db)
+    if user is None:
+        raise credentials_exception
+    
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is disabled"
+        )
+    
+    return user
 
 
 class ZerodhaCredentialsUpdate(BaseModel):
@@ -266,32 +313,125 @@ async def login(
 
 
 @router.post("/logout")
-async def logout(token: str = Depends(oauth2_scheme)):
+async def logout(
+    current_user: User = Depends(get_current_user_dependency),
+    request: Request = None,
+    db: AsyncSession = Depends(get_db)
+):
     """
     User logout
     
-    TODO: Implement
-    - Invalidate token
-    - Log audit event
+    Logs the logout event for audit trail.
+    Note: JWT tokens cannot be truly invalidated server-side without a blacklist.
+    Client should discard the token.
     """
+    # Log logout
+    await audit_service.log_event(
+        action="logout",
+        entity_type="user",
+        entity_id=str(current_user.id),
+        details={"username": current_user.username},
+        user_id=current_user.id,
+        username=current_user.username,
+        ip_address=request.client.host if request and request.client else None,
+        user_agent=request.headers.get("user-agent") if request else None,
+        db=db
+    )
+    
     return {
-        "message": "Logout endpoint - TODO",
-        "status": "not_implemented"
+        "status": "success",
+        "message": "Logged out successfully. Please discard your access token."
     }
 
 
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str = Field(..., description="Refresh token from login")
+
+
 @router.post("/refresh")
-async def refresh_token():
+async def refresh_token(
+    token_request: RefreshTokenRequest,
+    request: Request = None,
+    db: AsyncSession = Depends(get_db)
+):
     """
     Refresh access token using refresh token
     
-    TODO: Implement
-    - Validate refresh token
-    - Generate new access token
+    Args:
+        token_request: Contains refresh_token
+    
+    Returns:
+        New access token and refresh token
     """
+    # Decode refresh token
+    payload = auth_service.decode_token(token_request.refresh_token)
+    
+    if payload is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Verify it's a refresh token
+    if payload.get("type") != "refresh":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not a refresh token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Extract user info
+    username: str = payload.get("sub")
+    user_id: int = payload.get("user_id")
+    
+    if username is None or user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Get user from database
+    user = await auth_service.get_user_by_id(user_id, db)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found"
+        )
+    
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is disabled"
+        )
+    
+    # Generate new tokens
+    new_access_token = auth_service.create_access_token(
+        data={"sub": user.username, "user_id": user.id, "role": user.role.value}
+    )
+    new_refresh_token = auth_service.create_refresh_token(
+        data={"sub": user.username, "user_id": user.id}
+    )
+    
+    # Log token refresh
+    await audit_service.log_event(
+        action="token_refresh",
+        entity_type="user",
+        entity_id=str(user.id),
+        details={"username": user.username},
+        user_id=user.id,
+        username=user.username,
+        ip_address=request.client.host if request and request.client else None,
+        user_agent=request.headers.get("user-agent") if request else None,
+        db=db
+    )
+    
     return {
-        "message": "Token refresh endpoint - TODO",
-        "status": "not_implemented"
+        "status": "success",
+        "access_token": new_access_token,
+        "refresh_token": new_refresh_token,
+        "token_type": "bearer"
     }
 
 
@@ -340,18 +480,42 @@ async def update_zerodha_credentials(
 
 
 @router.get("/me")
-async def get_current_user(token: str = Depends(oauth2_scheme)):
+async def get_current_user(
+    current_user: User = Depends(get_current_user_dependency),
+    request: Request = None,
+    db: AsyncSession = Depends(get_db)
+):
     """
-    Get current authenticated user
+    Get current authenticated user profile
     
-    TODO: Implement
-    - Decode JWT
-    - Fetch user from database
-    - Return user profile
+    Returns:
+        User profile information
     """
+    # Log access
+    await audit_service.log_event(
+        action="profile_access",
+        entity_type="user",
+        entity_id=str(current_user.id),
+        details={"username": current_user.username},
+        user_id=current_user.id,
+        username=current_user.username,
+        ip_address=request.client.host if request and request.client else None,
+        user_agent=request.headers.get("user-agent") if request else None,
+        db=db
+    )
+    
     return {
-        "message": "Get current user endpoint - TODO",
-        "status": "not_implemented"
+        "status": "success",
+        "user": {
+            "id": current_user.id,
+            "username": current_user.username,
+            "email": current_user.email,
+            "full_name": current_user.full_name,
+            "role": current_user.role.value,
+            "is_active": current_user.is_active,
+            "created_at": current_user.created_at.isoformat() if current_user.created_at else None,
+            "last_login_at": current_user.last_login_at.isoformat() if current_user.last_login_at else None
+        }
     }
 
 
