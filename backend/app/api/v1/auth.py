@@ -524,7 +524,6 @@ async def get_current_user(
 
 @router.get("/zerodha/connect")
 async def zerodha_oauth_initiate(
-    current_user: User = Depends(get_current_user_dependency),
     request: Request = None,
     state: Optional[str] = Query(
         default=None,
@@ -535,7 +534,8 @@ async def zerodha_oauth_initiate(
     """
     Initiate Zerodha OAuth flow
     
-    Requires JWT authentication. The Zerodha session will be linked to the current user.
+    NOTE: This endpoint is PUBLIC (no JWT required) to allow OAuth flow initiation.
+    After OAuth completion, users should login and claim their session.
     
     Returns:
         dict: Login URL for Zerodha Kite Connect
@@ -554,9 +554,8 @@ async def zerodha_oauth_initiate(
         action="oauth_initiate",
         entity_type="broker_connection",
         entity_id=state or "anonymous",
-        details={"broker": "zerodha", "state": state, "user_id": current_user.id},
-        user_id=current_user.id,
-        username=current_user.username,
+        details={"broker": "zerodha", "state": state},
+        username=state or "anonymous",
         ip_address=request.client.host if request and request.client else None,
         user_agent=request.headers.get("user-agent") if request else None,
         db=db
@@ -580,7 +579,6 @@ async def zerodha_oauth_initiate(
 @router.get("/zerodha/callback")
 async def zerodha_oauth_callback(
     request: Request,
-    current_user: User = Depends(get_current_user_dependency),
     request_token: Optional[str] = None,
     status: Optional[str] = None,
     action: Optional[str] = None,
@@ -591,7 +589,10 @@ async def zerodha_oauth_callback(
     Handle Zerodha OAuth callback
     
     This endpoint receives the redirect from Zerodha after user authorization.
-    Requires JWT authentication - the session will be linked to the authenticated user.
+    
+    NOTE: This endpoint is PUBLIC (no JWT required) because browser redirects
+    from Zerodha cannot include Authorization headers. The session is stored
+    without user_id initially. Users should "claim" their session after login.
     
     Query Parameters:
         request_token: Token to exchange for access_token
@@ -639,7 +640,7 @@ async def zerodha_oauth_callback(
         broker_session = await _store_broker_session(
             db=db,
             user_identifier=user_identifier,
-            user_id=current_user.id,
+            user_id=None,  # Set to None - user will claim session after login
             broker="zerodha",
             session_data=session_data,
         )
@@ -751,6 +752,60 @@ async def broker_status(db: AsyncSession = Depends(get_db)):
                 "message": "Not configured yet",
             },
         },
+    }
+
+
+@router.post("/zerodha/session/claim")
+async def claim_zerodha_session(
+    current_user: User = Depends(get_current_user_dependency),
+    user_identifier: str = Query(..., description="Session identifier to claim"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Claim a Zerodha session that was created via OAuth
+    
+    After completing OAuth, sessions are created without user_id.
+    This endpoint links the session to the authenticated user.
+    
+    Args:
+        user_identifier: The session identifier (state parameter from OAuth)
+    
+    Returns:
+        dict: Claimed session details
+    """
+    # Find the session
+    result = await db.execute(
+        select(BrokerSession).where(
+            BrokerSession.user_identifier == user_identifier,
+            BrokerSession.broker == "zerodha",
+            BrokerSession.status == "active"
+        )
+    )
+    session = result.scalar_one_or_none()
+    
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No active Zerodha session found with identifier '{user_identifier}'"
+        )
+    
+    # Check if already claimed
+    if session.user_id and session.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Session '{user_identifier}' is already claimed by another user"
+        )
+    
+    # Claim the session
+    session.user_id = current_user.id
+    await db.commit()
+    
+    return {
+        "status": "success",
+        "message": f"Session '{user_identifier}' claimed successfully",
+        "user_identifier": user_identifier,
+        "user_id": current_user.id,
+        "username": current_user.username
     }
 
 
