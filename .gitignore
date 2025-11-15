@@ -45,6 +45,13 @@ tests/scripts/order_management_test_*.md
 tests/scripts/risk_management_test_*.md
 tests/scripts/zerodha_api_test_*.md
 
+# Specific test scripts to ignore
+tests/scripts/test_streaming_apis.sh
+
+# Utility scripts to ignore
+scripts/utilities/create_test_users.sh
+backend/scripts/create_default_user.py
+
 # IDE and editor metadata
 .vscode/
 .idea/
