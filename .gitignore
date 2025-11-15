@@ -50,7 +50,11 @@ tests/scripts/test_streaming_apis.sh
 
 # Utility scripts to ignore
 scripts/utilities/create_test_users.sh
+scripts/utilities/zerodha_reauth.sh
 backend/scripts/create_default_user.py
+
+# Test scripts with secrets
+tests/scripts/QUICK_TEST.sh
 
 # IDE and editor metadata
 .vscode/
