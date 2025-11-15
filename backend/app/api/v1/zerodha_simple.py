@@ -40,10 +40,33 @@ def _error(message: str):
 
 # ===== BASIC ENDPOINTS =====
 
-@router.get("/zerodha/profile")
+@router.get(
+    "/zerodha/profile",
+    summary="Get Zerodha User Profile",
+    description="""
+    Get Zerodha account profile information.
+    
+    **Authentication:** Requires JWT Bearer token
+    
+    **Parameters:**
+    - `user_identifier`: Zerodha OAuth user identifier (e.g., RO0252). Must be owned by authenticated user.
+    
+    **Returns:**
+    - User ID, name, email
+    - Enabled exchanges (NSE, BSE, NFO, etc.)
+    - Enabled products (CNC, MIS, NRML, etc.)
+    - Enabled order types (MARKET, LIMIT, SL, etc.)
+    
+    **Example:**
+    ```bash
+    curl -H "Authorization: Bearer $ACCESS_TOKEN" \\
+      "https://piyushdev.com/api/v1/data/zerodha/profile?user_identifier=RO0252"
+    ```
+    """
+)
 async def get_profile(
     current_user: User = Depends(get_current_user_dependency),
-    user_identifier: str = Query(..., description="Zerodha OAuth user identifier"),
+    user_identifier: str = Query(..., description="Zerodha OAuth user identifier (e.g., RO0252)", example="RO0252"),
     db: AsyncSession = Depends(get_db),
 ):
     try:

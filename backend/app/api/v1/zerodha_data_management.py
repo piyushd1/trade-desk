@@ -40,20 +40,28 @@ router = APIRouter(prefix="/zerodha/data", tags=["Zerodha Data Management"])
 
 
 class InstrumentSyncRequest(BaseModel):
-    user_identifier: str = Field(..., description="User identifier used during OAuth")
-    exchange: Optional[str] = Field(
-        None, description="Optional exchange filter (NSE, BSE, NFO, etc.)"
-    )
+    """Request to sync instruments from Zerodha to local database
+    
+    **Authentication:** Requires JWT Bearer token
+    **Note:** This operation may take several minutes for large exchanges (NSE has 100K+ instruments).
+    """
+    user_identifier: str = Field(..., description="Zerodha OAuth user identifier (e.g., RO0252)", example="RO0252")
+    exchange: str = Field(..., description="Exchange to sync: NSE, BSE, NFO, etc.", example="NSE")
 
 
 class HistoricalFetchRequest(BaseModel):
-    user_identifier: str = Field(..., description="User identifier used during OAuth")
-    instrument_token: int = Field(..., description="Instrument token to fetch candles for")
-    from_date: datetime = Field(..., description="Start date (inclusive)")
-    to_date: datetime = Field(..., description="End date (inclusive)")
-    interval: str = Field(..., description="Interval (minute, 3minute, 5minute, day, etc.)")
-    continuous: bool = Field(False, description="Continuous data for F&O contracts")
-    oi: bool = Field(False, description="Include open interest data")
+    """Request to fetch and store historical data from Zerodha
+    
+    **Authentication:** Requires JWT Bearer token
+    **Note:** Fetches data from Zerodha and stores it in local database for fast querying.
+    """
+    user_identifier: str = Field(..., description="Zerodha OAuth user identifier (e.g., RO0252)", example="RO0252")
+    instrument_token: int = Field(..., description="Instrument token (e.g., 408065 for INFY)", example=408065)
+    from_date: datetime = Field(..., description="Start date (ISO format: YYYY-MM-DDTHH:MM:SS)", example="2025-11-01T00:00:00")
+    to_date: datetime = Field(..., description="End date (ISO format: YYYY-MM-DDTHH:MM:SS)", example="2025-11-13T23:59:59")
+    interval: str = Field(..., description="Interval: minute, 3minute, 5minute, 15minute, 30minute, 60minute, day", example="day")
+    continuous: bool = Field(False, description="Continuous data for F&O contracts (expiry rollover)", example=False)
+    oi: bool = Field(False, description="Include open interest (for F&O instruments)", example=False)
 
 
 class HistoricalQueryParams(BaseModel):
@@ -78,7 +86,37 @@ class HistoricalCleanupRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-@router.post("/instruments/sync", summary="Sync instruments from Zerodha")
+@router.post(
+    "/instruments/sync", 
+    summary="Sync Instruments from Zerodha",
+    description="""
+    Sync all instruments from Zerodha for a specific exchange and store in local database.
+    
+    **Authentication:** Requires JWT Bearer token
+    
+    **Parameters:**
+    - `user_identifier`: Zerodha OAuth user identifier (must be owned by authenticated user)
+    - `exchange`: Exchange to sync (NSE, BSE, NFO, etc.)
+    
+    **Note:** 
+    - This operation may take several minutes (NSE has 100K+ instruments)
+    - Instruments are stored locally for fast searching
+    - Subsequent syncs will update existing instruments
+    
+    **Example:**
+    ```bash
+    curl -X POST -H "Authorization: Bearer $ACCESS_TOKEN" \\
+      -H "Content-Type: application/json" \\
+      -d '{
+        "user_identifier": "RO0252",
+        "exchange": "NSE"
+      }' \\
+      "https://piyushdev.com/api/v1/data/zerodha/data/instruments/sync"
+    ```
+    
+    **Returns:** Summary with count of instruments synced.
+    """
+)
 async def instruments_sync(
     request: InstrumentSyncRequest,
     current_user: User = Depends(get_current_user_dependency),
@@ -92,13 +130,35 @@ async def instruments_sync(
     return {"status": "success", "summary": summary}
 
 
-@router.get("/instruments/search", summary="Search instruments")
+@router.get(
+    "/instruments/search", 
+    summary="Search Instruments",
+    description="""
+    Search instruments in the local database.
+    
+    **Authentication:** Public endpoint (no JWT required)
+    
+    **Parameters:**
+    - `q`: Search query (searches tradingsymbol and name)
+    - `exchange`: Filter by exchange (NSE, BSE, etc.)
+    - `segment`: Filter by segment (INDICES, EQUITY, etc.)
+    - `instrument_type`: Filter by type (EQ, CE, PE, etc.)
+    - `limit`: Maximum number of results (1-200, default: 50)
+    
+    **Example:**
+    ```bash
+    curl "https://piyushdev.com/api/v1/data/zerodha/data/instruments/search?q=INFY&exchange=NSE&limit=5"
+    ```
+    
+    **Returns:** Array of matching instruments with details.
+    """
+)
 async def instruments_search(
-    q: Optional[str] = Query(None, description="Search query (tradingsymbol or name)"),
-    exchange: Optional[str] = Query(None, description="Exchange filter"),
-    segment: Optional[str] = Query(None, description="Segment filter"),
-    instrument_type: Optional[str] = Query(None, description="Instrument type filter"),
-    limit: int = Query(50, ge=1, le=200, description="Maximum number of results"),
+    q: Optional[str] = Query(None, description="Search query (tradingsymbol or name). Example: INFY", example="INFY"),
+    exchange: Optional[str] = Query(None, description="Exchange filter. Example: NSE", example="NSE"),
+    segment: Optional[str] = Query(None, description="Segment filter. Example: EQUITY", example="EQUITY"),
+    instrument_type: Optional[str] = Query(None, description="Instrument type filter. Example: EQ", example="EQ"),
+    limit: int = Query(50, ge=1, le=200, description="Maximum number of results (1-200)", example=50),
     db: AsyncSession = Depends(get_db),
 ):
     results = await search_instruments(
@@ -130,7 +190,45 @@ async def instrument_detail(
 # ---------------------------------------------------------------------------
 
 
-@router.post("/historical/fetch", summary="Fetch & store historical data")
+@router.post(
+    "/historical/fetch", 
+    summary="Fetch and Store Historical Data",
+    description="""
+    Fetch historical candle data from Zerodha and store in local database.
+    
+    **Authentication:** Requires JWT Bearer token
+    
+    **Parameters:**
+    - `user_identifier`: Zerodha OAuth user identifier (must be owned by authenticated user)
+    - `instrument_token`: Instrument token (e.g., 408065 for INFY)
+    - `from_date`: Start date (ISO format: YYYY-MM-DDTHH:MM:SS)
+    - `to_date`: End date (ISO format: YYYY-MM-DDTHH:MM:SS)
+    - `interval`: Data interval (minute, day, etc.)
+    - `oi`: Include open interest (for F&O instruments)
+    - `continuous`: Continuous data for F&O contracts (expiry rollover)
+    
+    **Intervals Available:**
+    - `minute`, `3minute`, `5minute`, `15minute`, `30minute`, `60minute` (up to 60 days)
+    - `day` (up to 2000 days / ~5.5 years)
+    
+    **Example:**
+    ```bash
+    curl -X POST -H "Authorization: Bearer $ACCESS_TOKEN" \\
+      -H "Content-Type: application/json" \\
+      -d '{
+        "user_identifier": "RO0252",
+        "instrument_token": 408065,
+        "from_date": "2025-11-01T00:00:00",
+        "to_date": "2025-11-13T23:59:59",
+        "interval": "day",
+        "oi": false
+      }' \\
+      "https://piyushdev.com/api/v1/data/zerodha/data/historical/fetch"
+    ```
+    
+    **Returns:** Summary with count of candles fetched and stored.
+    """
+)
 async def historical_fetch(
     request: HistoricalFetchRequest,
     current_user: User = Depends(get_current_user_dependency),

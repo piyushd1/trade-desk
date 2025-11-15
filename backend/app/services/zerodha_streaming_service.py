@@ -250,8 +250,11 @@ class ZerodhaStreamingManager:
                 self.stop_stream(user_identifier)
 
             ticker = KiteTicker(settings.ZERODHA_API_KEY, access_token)
-            # Disable auto reconnection? Not necessary but we can configure.
-            ticker.enable_reconnect(reconnect=True, reconnect_interval=5, reconnect_tries=50)
+            # Configure auto reconnection if method exists
+            if hasattr(ticker, 'enable_reconnect'):
+                ticker.enable_reconnect(reconnect=True, reconnect_interval=5, reconnect_tries=50)
+            # Alternative: Some versions use auto_reconnect parameter in constructor
+            # If enable_reconnect doesn't exist, KiteTicker may handle reconnection automatically
 
             state = ZerodhaStreamState(
                 user_identifier=user_identifier,
@@ -307,6 +310,27 @@ class ZerodhaStreamingManager:
         if not tokens:
             raise ValueError("At least one instrument token is required")
 
+        # Wait for connection if still connecting (max 10 seconds)
+        if state.is_connecting and not state.is_connected:
+            logger.info(
+                "⏳ Waiting for stream connection before updating subscription | user=%s",
+                user_identifier
+            )
+            connected = state.connected_event.wait(timeout=10)
+            if not connected or not state.is_connected:
+                raise ValueError(
+                    f"Stream is not connected yet for user {user_identifier}. "
+                    f"Please wait for the stream to connect before updating subscription."
+                )
+
+        # Check if stream is connected
+        if not state.is_connected:
+            raise ValueError(
+                f"Stream is not connected for user {user_identifier}. "
+                f"Connection status: connecting={state.is_connecting}, "
+                f"error={state.last_error_message or 'None'}"
+            )
+
         with state.lock:
             state.instrument_tokens = tokens
             if mode:
@@ -321,6 +345,15 @@ class ZerodhaStreamingManager:
                     "ltp": state.ticker.MODE_LTP,
                 }.get(mode.lower(), state.ticker.MODE_FULL)
                 state.ticker.set_mode(mode_value, tokens)
+        except AttributeError as exc:
+            # Handle case where WebSocket is None (not connected)
+            error_msg = str(exc)
+            if "'NoneType' object has no attribute" in error_msg:
+                raise ValueError(
+                    f"Stream WebSocket is not ready for user {user_identifier}. "
+                    f"Please wait for the stream to fully connect before updating subscription."
+                ) from exc
+            raise
         except Exception as exc:
             logger.error(
                 "⚠️ Failed to update Zerodha subscription | user=%s | error=%s",

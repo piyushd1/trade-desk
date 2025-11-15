@@ -4,7 +4,7 @@ User authentication, OAuth, and JWT token management
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -23,12 +23,16 @@ from fastapi import Request
 
 router = APIRouter()
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+# HTTPBearer for JWT token authentication (shows simple Bearer token input in Swagger UI)
+http_bearer = HTTPBearer(
+    scheme_name="Bearer",
+    description="JWT Bearer token authentication. Get your token from /api/v1/auth/login endpoint."
+)
 
 
 # Dependency to get current authenticated user from JWT
 async def get_current_user_dependency(
-    token: str = Depends(oauth2_scheme),
+    credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
     db: AsyncSession = Depends(get_db)
 ) -> User:
     """
@@ -45,6 +49,9 @@ async def get_current_user_dependency(
         detail="Not authenticated",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    
+    # Extract token from Bearer credentials
+    token = credentials.credentials
     
     # Decode token
     payload = auth_service.decode_token(token)
@@ -177,9 +184,12 @@ class UserRegister(BaseModel):
     full_name: Optional[str] = None
 
 class UserLogin(BaseModel):
-    """User login request"""
-    username: str
-    password: str
+    """User login request
+    
+    Use this to authenticate and get your JWT access token.
+    """
+    username: str = Field(..., description="Your platform username", example="piyushdev")
+    password: str = Field(..., description="Your platform password", example="piyush123")
 
 @router.post("/register")
 async def register(user_data: UserRegister, request: Request, db: AsyncSession = Depends(get_db)):
@@ -244,17 +254,58 @@ async def register(user_data: UserRegister, request: Request, db: AsyncSession =
     }
 
 
-@router.post("/login")
+@router.post(
+    "/login",
+    summary="User Login",
+    description="""
+    Authenticate user and get JWT access token.
+    
+    **Authentication:** Public endpoint (no token required)
+    
+    **Request Body:**
+    - `username`: Your platform username
+    - `password`: Your platform password
+    
+    **Returns:**
+    - `access_token`: JWT token for API authentication (valid 15 minutes)
+    - `refresh_token`: Token to refresh access token (valid 7 days)
+    - `user`: User information (id, username, email, role)
+    
+    **Example:**
+    ```bash
+    curl -X POST https://piyushdev.com/api/v1/auth/login \\
+      -H "Content-Type: application/json" \\
+      -d '{"username":"piyushdev","password":"piyush123"}'
+    ```
+    
+    **Response:**
+    ```json
+    {
+      "status": "success",
+      "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "token_type": "bearer",
+      "user": {
+        "id": 2,
+        "username": "piyushdev",
+        "email": "piyush.dev@gmail.com",
+        "role": "trader"
+      }
+    }
+    ```
+    
+    **Next Steps:**
+    1. Copy the `access_token` from the response
+    2. Click "Authorize" button in Swagger UI (top right)
+    3. Paste your token (or use format: `Bearer <token>`)
+    4. Now you can test all protected endpoints
+    """
+)
 async def login(
     user_data: UserLogin,
     request: Request,
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    User login with username/password
-    
-    Returns JWT access token and refresh token
-    """
     from app.services.auth_service import auth_service
     
     # Authenticate user
@@ -315,19 +366,29 @@ async def login(
     }
 
 
-@router.post("/logout")
+@router.post(
+    "/logout",
+    summary="User Logout",
+    description="""
+    Logout user and log the event for audit trail.
+    
+    **Authentication:** Requires JWT Bearer token
+    
+    **Note:** JWT tokens cannot be truly invalidated server-side without a blacklist.
+    Client should discard the token after logout.
+    
+    **Example:**
+    ```bash
+    curl -X POST -H "Authorization: Bearer $ACCESS_TOKEN" \\
+      "https://piyushdev.com/api/v1/auth/logout"
+    ```
+    """
+)
 async def logout(
     current_user: User = Depends(get_current_user_dependency),
     request: Request = None,
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    User logout
-    
-    Logs the logout event for audit trail.
-    Note: JWT tokens cannot be truly invalidated server-side without a blacklist.
-    Client should discard the token.
-    """
     # Log logout
     await audit_service.log_event(
         action="logout",
@@ -348,24 +409,44 @@ async def logout(
 
 
 class RefreshTokenRequest(BaseModel):
-    refresh_token: str = Field(..., description="Refresh token from login")
+    """Request to refresh access token
+    
+    Use your refresh_token from login to get a new access_token.
+    """
+    refresh_token: str = Field(..., description="Refresh token obtained from login endpoint", example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
 
 
-@router.post("/refresh")
+@router.post(
+    "/refresh",
+    summary="Refresh Access Token",
+    description="""
+    Get a new access token using your refresh token.
+    
+    **Authentication:** Public endpoint (no token required)
+    
+    **Request Body:**
+    - `refresh_token`: Refresh token obtained from login endpoint
+    
+    **Returns:**
+    - New `access_token` (valid 15 minutes)
+    - New `refresh_token` (valid 7 days)
+    
+    **Example:**
+    ```bash
+    curl -X POST https://piyushdev.com/api/v1/auth/refresh \\
+      -H "Content-Type: application/json" \\
+      -d '{"refresh_token": "your_refresh_token_here"}'
+    ```
+    
+    **Use Case:** When your access token expires (after 15 minutes), use this endpoint
+    to get a new one without logging in again.
+    """
+)
 async def refresh_token(
     token_request: RefreshTokenRequest,
     request: Request = None,
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Refresh access token using refresh token
-    
-    Args:
-        token_request: Contains refresh_token
-    
-    Returns:
-        New access token and refresh token
-    """
     # Decode refresh token
     payload = auth_service.decode_token(token_request.refresh_token)
     
@@ -482,18 +563,33 @@ async def update_zerodha_credentials(
     }
 
 
-@router.get("/me")
+@router.get(
+    "/me",
+    summary="Get Current User Profile",
+    description="""
+    Get the profile of the currently authenticated user.
+    
+    **Authentication:** Requires JWT Bearer token
+    
+    **Returns:**
+    - User ID, username, email, full name
+    - User role (trader, admin, etc.)
+    - Account status
+    
+    **Example:**
+    ```bash
+    curl -H "Authorization: Bearer $ACCESS_TOKEN" \\
+      "https://piyushdev.com/api/v1/auth/me"
+    ```
+    
+    **Use Case:** Verify your authentication status and get your user information.
+    """
+)
 async def get_current_user(
     current_user: User = Depends(get_current_user_dependency),
     request: Request = None,
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Get current authenticated user profile
-    
-    Returns:
-        User profile information
-    """
     # Log access
     await audit_service.log_event(
         action="profile_access",

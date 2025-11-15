@@ -36,6 +36,14 @@ logs/
 .coverage
 htmlcov/
 .cache/
+# Test result files (auto-generated)
+tests/scripts/*_test_*.md
+tests/scripts/streaming_test_*.md
+tests/scripts/market_data_test_*.md
+tests/scripts/data_management_test_*.md
+tests/scripts/order_management_test_*.md
+tests/scripts/risk_management_test_*.md
+tests/scripts/zerodha_api_test_*.md
 
 # IDE and editor metadata
 .vscode/

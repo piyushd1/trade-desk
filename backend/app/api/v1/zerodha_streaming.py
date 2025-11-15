@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, model_validator
 from kiteconnect import KiteConnect
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
@@ -36,33 +36,55 @@ router = APIRouter(prefix="/zerodha", tags=["Zerodha Data Streaming"])
 
 
 class InstrumentSubscription(BaseModel):
+    """Instrument subscription for streaming
+    
+    Either `instrument_token` OR `tradingsymbol` must be provided.
+    If using `tradingsymbol`, `exchange` is required.
+    """
     instrument_token: Optional[int] = Field(
-        None, description="Instrument token to subscribe to"
+        None, 
+        description="Instrument token to subscribe to (e.g., 408065 for INFY)",
+        example=408065
     )
     tradingsymbol: Optional[str] = Field(
-        None, description="Trading symbol (e.g. INFY, RELIANCE)"
+        None, 
+        description="Trading symbol (e.g., INFY, RELIANCE). Required if instrument_token not provided.",
+        example="INFY"
     )
     exchange: Optional[str] = Field(
         "NSE",
-        description="Exchange for the trading symbol (NSE, BSE, NFO, etc.)",
+        description="Exchange for the trading symbol (NSE, BSE, NFO, etc.). Required if using tradingsymbol.",
+        example="NSE"
     )
 
-    @validator("instrument_token", always=True)
-    def validate_token_or_symbol(cls, v, values):
-        if v is None and not values.get("tradingsymbol"):
+    @model_validator(mode='after')
+    def validate_token_or_symbol(self):
+        """Ensure either instrument_token or tradingsymbol is provided."""
+        if self.instrument_token is None and not self.tradingsymbol:
             raise ValueError("Either instrument_token or tradingsymbol must be provided")
-        return v
+        return self
 
 
 class StartStreamRequest(BaseModel):
-    user_identifier: str = Field(..., description="User identifier used during OAuth")
+    """Request to start a real-time data stream"""
+    user_identifier: str = Field(
+        ..., 
+        description="Zerodha OAuth user identifier (e.g., RO0252)",
+        example="RO0252"
+    )
     instruments: List[InstrumentSubscription] = Field(
-        ..., description="Instruments to subscribe for streaming"
+        ..., 
+        description="List of instruments to subscribe for streaming",
+        example=[
+            {"instrument_token": 408065},
+            {"tradingsymbol": "RELIANCE", "exchange": "NSE"}
+        ]
     )
     mode: str = Field(
         "full",
-        description="Streaming mode: full, quote, or ltp",
+        description="Streaming mode: 'full' (complete tick data), 'quote' (bid/ask depth), or 'ltp' (last traded price only)",
         pattern="^(full|quote|ltp)$",
+        example="ltp"
     )
 
 
@@ -142,13 +164,44 @@ async def _resolve_instrument_tokens(
 # ---------------------------------------------------------------------------
 
 
-@router.post("/stream/start", summary="Start Zerodha data stream")
+@router.post(
+    "/stream/start", 
+    summary="Start Zerodha Data Stream",
+    description="""
+    Start a real-time WebSocket stream for market data.
+    
+    **Authentication:** Requires JWT Bearer token
+    
+    **Parameters:**
+    - `user_identifier`: Zerodha OAuth user identifier (e.g., RO0252)
+    - `instruments`: Array of instruments to subscribe to. Each instrument can use:
+      - `instrument_token`: Direct token (e.g., 408065)
+      - `tradingsymbol` + `exchange`: Symbol and exchange (e.g., "INFY", "NSE")
+    - `mode`: Streaming mode - "full" (complete data), "quote" (bid/ask), or "ltp" (last price only)
+    
+    **Example:**
+    ```bash
+    curl -X POST -H "Authorization: Bearer $ACCESS_TOKEN" \\
+      -H "Content-Type: application/json" \\
+      -d '{
+        "user_identifier": "RO0252",
+        "instruments": [
+          {"instrument_token": 408065},
+          {"tradingsymbol": "RELIANCE", "exchange": "NSE"}
+        ],
+        "mode": "ltp"
+      }' \\
+      "https://piyushdev.com/api/v1/data/zerodha/stream/start"
+    ```
+    
+    **Returns:** Stream status with connection metadata and resolved instrument tokens.
+    """
+)
 async def start_stream(
     request: StartStreamRequest,
     current_user: User = Depends(get_current_user_dependency),
     db: AsyncSession = Depends(get_db)
 ):
-    """Start streaming real-time ticks for the specified user and instruments."""
     session = await validate_user_owns_session(current_user, request.user_identifier, db)
     access_token = decrypt_access_token(session)
 
@@ -263,20 +316,50 @@ async def stream_ticks(
     return {"user_identifier": user_identifier, "ticks": ticks}
 
 
-@router.get("/session/status", response_model=SessionStatusResponse, summary="Zerodha session status")
+@router.get(
+    "/session/status", 
+    response_model=SessionStatusResponse, 
+    summary="Get Zerodha Session Status",
+    description="""
+    Get Zerodha session information including expiry and refresh token availability.
+    
+    **Authentication:** Requires JWT Bearer token
+    
+    **Parameters:**
+    - `user_identifier`: Zerodha OAuth user identifier (e.g., RO0252)
+    
+    **Returns:**
+    - Session status (active, expired, etc.)
+    - Expiry timestamp and time remaining
+    - Whether refresh token is available
+    
+    **Example:**
+    ```bash
+    curl -H "Authorization: Bearer $ACCESS_TOKEN" \\
+      "https://piyushdev.com/api/v1/data/zerodha/session/status?user_identifier=RO0252"
+    ```
+    """
+)
 async def session_status(
     current_user: User = Depends(get_current_user_dependency),
-    user_identifier: str = Query(..., description="User identifier"),
+    user_identifier: str = Query(..., description="Zerodha OAuth user identifier (e.g., RO0252)", example="RO0252"),
     db: AsyncSession = Depends(get_db),
 ):
-    """Return stored session information (without decrypting tokens)."""
     session = await validate_user_owns_session(current_user, user_identifier, db)
 
     expires_at = session.expires_at.isoformat() if session.expires_at else None
     expires_in_minutes = None
     if session.expires_at:
-        now = datetime.now(session.expires_at.tzinfo or timezone.utc)
-        expires_in_minutes = (session.expires_at - now).total_seconds() / 60
+        # Handle timezone: expires_at may be naive (stored as UTC) or aware
+        if session.expires_at.tzinfo is None:
+            # If naive, assume it's UTC and make it timezone-aware
+            expires_at_aware = session.expires_at.replace(tzinfo=timezone.utc)
+            now = datetime.now(timezone.utc)
+        else:
+            # If already timezone-aware, use as-is
+            expires_at_aware = session.expires_at
+            now = datetime.now(expires_at_aware.tzinfo)
+        expires_in_minutes = (expires_at_aware - now).total_seconds() / 60
 
     return SessionStatusResponse(
         user_identifier=session.user_identifier,

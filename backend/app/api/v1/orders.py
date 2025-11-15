@@ -33,25 +33,31 @@ router = APIRouter(prefix="/orders", tags=["Order Management"])
 
 
 class OrderBase(BaseModel):
-    user_id: int = Field(..., description="Internal user ID")
-    user_identifier: str = Field(..., description="Broker user identifier (OAuth state)")
-    exchange: str = Field(..., description="Exchange (NSE, BSE, NFO, etc.)")
-    tradingsymbol: str = Field(..., description="Trading symbol (e.g., INFY)")
-    transaction_type: str = Field(..., pattern="^(BUY|SELL)$")
-    quantity: int = Field(..., gt=0)
-    order_type: str = Field(..., description="Order type (MARKET, LIMIT, SL, SL-M)")
-    product: str = Field(..., description="Product (CNC, MIS, NRML, etc.)")
-    variety: str = Field("regular", description="Order variety (regular, amo, iceberg, etc.)")
-    validity: str = Field("DAY", description="Order validity (DAY, IOC, etc.)")
-    price: Optional[float] = Field(None, description="Order price (if applicable)")
-    trigger_price: Optional[float] = Field(None, description="Trigger price for SL/SL-M orders")
-    disclosed_quantity: Optional[int] = Field(None, description="Disclosed quantity")
-    tag: Optional[str] = Field(None, description="Custom tag (max 20 chars)")
-    instrument_token: Optional[int] = Field(None, description="Instrument token (optional)")
-    strategy_instance_id: Optional[int] = Field(None, description="Strategy instance ID")
+    """Base order request model
+    
+    **Authentication:** Requires JWT Bearer token
+    **Note:** All order endpoints require the authenticated user to own the specified `user_identifier` session.
+    """
+    user_id: int = Field(..., description="Internal platform user ID", example=2)
+    user_identifier: str = Field(..., description="Zerodha OAuth user identifier (e.g., RO0252)", example="RO0252")
+    exchange: str = Field(..., description="Exchange (NSE, BSE, NFO, etc.)", example="NSE")
+    tradingsymbol: str = Field(..., description="Trading symbol (e.g., INFY, RELIANCE)", example="INFY")
+    transaction_type: str = Field(..., pattern="^(BUY|SELL)$", description="Transaction type: BUY or SELL", example="BUY")
+    quantity: int = Field(..., gt=0, description="Order quantity (number of shares/lots)", example=10)
+    order_type: str = Field(..., description="Order type: MARKET, LIMIT, SL, SL-M", example="LIMIT")
+    product: str = Field(..., description="Product type: CNC (delivery), MIS (intraday), NRML (carry forward)", example="CNC")
+    variety: str = Field("regular", description="Order variety: regular, amo, iceberg, etc.", example="regular")
+    validity: str = Field("DAY", description="Order validity: DAY, IOC (Immediate or Cancel)", example="DAY")
+    price: Optional[float] = Field(None, description="Order price per unit (₹). Required for LIMIT orders.", example=1500.0)
+    trigger_price: Optional[float] = Field(None, description="Trigger price for SL/SL-M orders (₹)", example=1490.0)
+    disclosed_quantity: Optional[int] = Field(None, description="Disclosed quantity for iceberg orders", example=None)
+    tag: Optional[str] = Field(None, description="Custom tag for order tracking (max 20 characters)", example="algo_v1")
+    instrument_token: Optional[int] = Field(None, description="Instrument token (optional, will be resolved if not provided)", example=408065)
+    strategy_instance_id: Optional[int] = Field(None, description="Strategy instance ID for tracking", example=None)
     price_for_risk: Optional[float] = Field(
         None,
-        description="Price used for risk calculations if different from order price",
+        description="Price used for risk calculations if different from order price (₹)",
+        example=1500.0
     )
 
 
@@ -111,7 +117,53 @@ async def _ensure_price_for_risk(
     return price_for_risk, instrument_token
 
 
-@router.post("/preview", summary="Preview order with risk checks")
+@router.post(
+    "/preview", 
+    summary="Preview Order with Risk Checks",
+    description="""
+    Preview an order without placing it. Shows margin requirements and risk check results.
+    
+    **⚠️ SAFE ENDPOINT:** This endpoint does NOT place any orders. Use this to test order parameters.
+    
+    **Authentication:** Requires JWT Bearer token
+    
+    **Request Body:**
+    - `user_id`: Internal platform user ID
+    - `user_identifier`: Zerodha OAuth user identifier (must be owned by authenticated user)
+    - `exchange`: Exchange (NSE, BSE, NFO, etc.)
+    - `tradingsymbol`: Trading symbol (e.g., INFY)
+    - `transaction_type`: BUY or SELL
+    - `quantity`: Number of shares/lots
+    - `order_type`: MARKET, LIMIT, SL, SL-M
+    - `product`: CNC (delivery), MIS (intraday), NRML (carry forward)
+    - `price`: Required for LIMIT orders
+    - `trigger_price`: Required for SL/SL-M orders
+    
+    **Returns:**
+    - `all_checks_passed`: Boolean indicating if all risk checks passed
+    - `risk_checks`: Array of individual risk check results
+    - `margin`: Margin requirements and charges breakdown
+    
+    **Example:**
+    ```bash
+    curl -X POST -H "Authorization: Bearer $ACCESS_TOKEN" \\
+      -H "Content-Type: application/json" \\
+      -d '{
+        "user_id": 2,
+        "user_identifier": "RO0252",
+        "exchange": "NSE",
+        "tradingsymbol": "INFY",
+        "transaction_type": "BUY",
+        "quantity": 10,
+        "order_type": "LIMIT",
+        "product": "CNC",
+        "price": 1500.0,
+        "price_for_risk": 1500.0
+      }' \\
+      "https://piyushdev.com/api/v1/orders/preview"
+    ```
+    """
+)
 async def preview_order_endpoint(
     request: OrderPreviewRequest,
     current_user: User = Depends(get_current_user_dependency),

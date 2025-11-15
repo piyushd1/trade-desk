@@ -59,6 +59,22 @@ APP_DESCRIPTION = """
 
 **SEBI-compliant algorithmic trading platform** for personal use.
 
+### 🔐 Authentication
+
+**Getting Your JWT Token:**
+1. Use the `POST /api/v1/auth/login` endpoint with your username and password
+2. Copy the `access_token` from the response
+3. Click the **"Authorize"** button (top right) and paste your token
+4. Or include it in requests as: `Authorization: Bearer <your_token>`
+
+**Test Users:**
+- `piyushdev` / `piyush123` (user_id: 2)
+- `admin` / `admin123` (user_id: 1)
+
+**Token Expiration:**
+- Access tokens expire in 15 minutes
+- Use `POST /api/v1/auth/refresh` to get a new token
+
 ### Features
 - 🔐 **Secure Authentication**: JWT-based auth with refresh tokens
 - 📊 **Multi-Broker Support**: Zerodha, Groww integrations
@@ -68,10 +84,21 @@ APP_DESCRIPTION = """
 - 📈 **Performance Monitoring**: Request timing and metrics
 
 ### API Sections
-- **Auth**: User authentication and broker OAuth
-- **Trading**: Order placement and management
-- **Risk**: Risk controls and monitoring
-- **Audit**: Compliance and audit logs
+- **Authentication** (`/auth`): User login, JWT tokens, Zerodha OAuth
+- **Order Management** (`/orders`): Order preview, place, modify, cancel
+- **Risk Management** (`/risk`): Risk config, kill switch, pre-trade checks
+- **Zerodha Data** (`/data/zerodha`): Profile, margins, positions, orders, trades
+- **Market Data** (`/data/zerodha`): LTP, quote, OHLC, historical data
+- **Data Management** (`/data/zerodha/data`): Instrument sync, historical storage
+- **Streaming** (`/data/zerodha/stream`): Real-time WebSocket data streams
+- **Audit** (`/audit`): Compliance and audit logs
+
+### 📖 Using This Documentation
+
+1. **Get Token**: Use `POST /api/v1/auth/login` to get your JWT token
+2. **Authorize**: Click "Authorize" button and paste your token
+3. **Test APIs**: Click "Try it out" on any endpoint to test it
+4. **View Examples**: All endpoints have example request/response bodies
 """
 
 

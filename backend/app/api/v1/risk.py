@@ -15,6 +15,8 @@ from app.services.risk_manager import risk_manager
 from app.services.audit_service import audit_service
 from app.models import RiskConfig, DailyRiskMetrics, Position
 from app.models.audit import RiskBreachLog
+from app.models.user import User
+from app.api.v1.auth import get_current_user_dependency
 from sqlalchemy import func
 
 router = APIRouter()
@@ -41,32 +43,68 @@ class RiskConfigUpdate(BaseModel):
 
 
 class KillSwitchRequest(BaseModel):
-    """Kill switch toggle request"""
-    enabled: bool = Field(..., description="Enable or disable trading")
-    reason: Optional[str] = Field(None, description="Reason for toggle")
+    """Kill switch toggle request
+    
+    Emergency stop mechanism to immediately halt all trading.
+    Requires JWT authentication.
+    """
+    enabled: bool = Field(
+        ..., 
+        description="Enable or disable trading. Set to false to activate kill switch (stop all trading).",
+        example=False
+    )
+    reason: Optional[str] = Field(
+        None, 
+        description="Reason for toggling the kill switch (optional but recommended for audit trail)",
+        example="Emergency stop - market volatility"
+    )
 
 
 class PreTradeCheckRequest(BaseModel):
-    """Pre-trade check request"""
-    user_id: int = Field(..., gt=0, description="User ID")
-    symbol: str = Field(..., min_length=1, description="Trading symbol")
-    quantity: int = Field(..., gt=0, description="Order quantity")
-    price: float = Field(..., gt=0, description="Order price")
+    """Pre-trade check request
+    
+    Validates an order against all risk limits before placement.
+    Requires JWT authentication.
+    """
+    user_id: int = Field(..., gt=0, description="Internal platform user ID", example=2)
+    symbol: str = Field(..., min_length=1, description="Trading symbol (e.g., INFY, RELIANCE)", example="INFY")
+    quantity: int = Field(..., gt=0, description="Order quantity (number of shares/lots)", example=10)
+    price: float = Field(..., gt=0, description="Order price per unit (₹)", example=1500.0)
 
 
-@router.get("/risk/config")
+@router.get(
+    "/risk/config",
+    summary="Get Risk Configuration",
+    description="""
+    Get risk management configuration for a user or system-wide defaults.
+    
+    **Authentication:** Requires JWT Bearer token
+    
+    **Parameters:**
+    - `user_id`: Optional. If provided, returns user-specific config. If null, returns system-wide config.
+    
+    **Returns:**
+    - Risk limits (position limits, order limits, loss limits)
+    - Trading hours settings
+    - Stop loss defaults
+    - Kill switch status
+    
+    **Example:**
+    ```bash
+    curl -H "Authorization: Bearer $ACCESS_TOKEN" \\
+      "https://piyushdev.com/api/v1/risk/config?user_id=2"
+    ```
+    """
+)
 async def get_risk_config(
-    user_id: Optional[int] = Query(default=None, description="User ID (null for system-wide)"),
+    current_user: User = Depends(get_current_user_dependency),
+    user_id: Optional[int] = Query(
+        default=None, 
+        description="User ID (null for system-wide config). Example: 2",
+        example=2
+    ),
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Get risk configuration
-    
-    Returns user-specific config if user_id provided, otherwise system-wide config.
-    
-    Returns:
-        dict: Risk configuration
-    """
     config = await risk_manager.get_risk_config(user_id=user_id, db=db)
     
     return {
@@ -101,6 +139,7 @@ async def get_risk_config(
 async def update_risk_config(
     request: Request,
     config_update: RiskConfigUpdate,
+    current_user: User = Depends(get_current_user_dependency),
     user_id: Optional[int] = Query(default=None, description="User ID (null for system-wide)"),
     db: AsyncSession = Depends(get_db)
 ):
@@ -147,7 +186,8 @@ async def update_risk_config(
             "user_id": user_id,
             "changes": changes
         },
-        username=f"user_{user_id}" if user_id else "system",
+        username=current_user.username,
+        user_id=current_user.id,
         ip_address=request.client.host if request.client else None,
         user_agent=request.headers.get("user-agent"),
         db=db
@@ -161,21 +201,49 @@ async def update_risk_config(
     }
 
 
-@router.post("/risk/kill-switch")
+@router.post(
+    "/risk/kill-switch",
+    summary="Toggle Kill Switch",
+    description="""
+    Toggle the kill switch to enable or disable trading.
+    
+    **⚠️ CRITICAL ENDPOINT:** This endpoint can immediately halt all trading.
+    
+    **Authentication:** Requires JWT Bearer token
+    
+    **Parameters:**
+    - `user_id`: Optional. If provided, applies to user-specific config. If null, applies system-wide.
+    - `enabled`: Set to `false` to activate kill switch (stop trading), `true` to resume trading
+    - `reason`: Optional reason for the toggle (recommended for audit trail)
+    
+    **Example - Activate Kill Switch:**
+    ```bash
+    curl -X POST -H "Authorization: Bearer $ACCESS_TOKEN" \\
+      -H "Content-Type: application/json" \\
+      -d '{"enabled": false, "reason": "Emergency stop"}' \\
+      "https://piyushdev.com/api/v1/risk/kill-switch?user_id=2"
+    ```
+    
+    **Example - Resume Trading:**
+    ```bash
+    curl -X POST -H "Authorization: Bearer $ACCESS_TOKEN" \\
+      -H "Content-Type: application/json" \\
+      -d '{"enabled": true, "reason": "Resuming normal operations"}' \\
+      "https://piyushdev.com/api/v1/risk/kill-switch?user_id=2"
+    ```
+    """
+)
 async def toggle_kill_switch(
     request: Request,
     kill_switch: KillSwitchRequest,
-    user_id: Optional[int] = Query(default=None, description="User ID (null for system-wide)"),
+    current_user: User = Depends(get_current_user_dependency),
+    user_id: Optional[int] = Query(
+        default=None, 
+        description="User ID (null for system-wide). Example: 2",
+        example=2
+    ),
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Toggle kill switch (enable/disable trading)
-    
-    Emergency stop mechanism to halt all trading immediately.
-    
-    Returns:
-        dict: Kill switch status
-    """
     config = await risk_manager.get_risk_config(user_id=user_id, db=db)
     
     old_status = config.trading_enabled
@@ -195,7 +263,8 @@ async def toggle_kill_switch(
             "new_status": kill_switch.enabled,
             "reason": kill_switch.reason
         },
-        username=f"user_{user_id}" if user_id else "system",
+        username=current_user.username,
+        user_id=current_user.id,
         ip_address=request.client.host if request.client else None,
         user_agent=request.headers.get("user-agent"),
         db=db
@@ -223,17 +292,38 @@ async def toggle_kill_switch(
     }
 
 
-@router.get("/risk/kill-switch/status")
+@router.get(
+    "/risk/kill-switch/status",
+    summary="Get Kill Switch Status",
+    description="""
+    Get the current kill switch status (whether trading is enabled or disabled).
+    
+    **Authentication:** Requires JWT Bearer token
+    
+    **Parameters:**
+    - `user_id`: Optional. If provided, returns user-specific status. If null, returns system-wide status.
+    
+    **Returns:**
+    - `trading_enabled`: Boolean indicating if trading is currently enabled
+    - `user_id`: The user ID this status applies to (or null for system-wide)
+    - `config_id`: The risk config ID
+    
+    **Example:**
+    ```bash
+    curl -H "Authorization: Bearer $ACCESS_TOKEN" \\
+      "https://piyushdev.com/api/v1/risk/kill-switch/status?user_id=2"
+    ```
+    """
+)
 async def get_kill_switch_status(
-    user_id: Optional[int] = Query(default=None, description="User ID (null for system-wide)"),
+    current_user: User = Depends(get_current_user_dependency),
+    user_id: Optional[int] = Query(
+        default=None, 
+        description="User ID (null for system-wide). Example: 2",
+        example=2
+    ),
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Get kill switch status
-    
-    Returns:
-        dict: Current kill switch status
-    """
     config = await risk_manager.get_risk_config(user_id=user_id, db=db)
     
     return {
@@ -244,19 +334,52 @@ async def get_kill_switch_status(
     }
 
 
-@router.post("/risk/pre-trade-check")
+@router.post(
+    "/risk/pre-trade-check",
+    summary="Pre-Trade Risk Check",
+    description="""
+    Run comprehensive risk checks before placing an order.
+    
+    **Authentication:** Requires JWT Bearer token
+    
+    **Validates:**
+    - Kill switch status
+    - Trading hours
+    - Position limits
+    - Order limits
+    - OPS (Orders Per Second) limits
+    - Loss limits
+    
+    **Request Body:**
+    - `user_id`: Internal platform user ID
+    - `symbol`: Trading symbol (e.g., INFY)
+    - `quantity`: Number of shares/lots
+    - `price`: Price per unit (₹)
+    
+    **Returns:**
+    - `all_passed`: Boolean indicating if all checks passed
+    - `order_value`: Calculated order value (quantity × price)
+    - `checks`: Array of individual check results with reasons
+    
+    **Example:**
+    ```bash
+    curl -X POST -H "Authorization: Bearer $ACCESS_TOKEN" \\
+      -H "Content-Type: application/json" \\
+      -d '{
+        "user_id": 2,
+        "symbol": "INFY",
+        "quantity": 10,
+        "price": 1500.0
+      }' \\
+      "https://piyushdev.com/api/v1/risk/pre-trade-check"
+    ```
+    """
+)
 async def pre_trade_check(
     check_request: PreTradeCheckRequest,
+    current_user: User = Depends(get_current_user_dependency),
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Run pre-trade risk check
-    
-    Validates order against all risk limits before placement.
-    
-    Returns:
-        dict: Risk check results
-    """
     all_passed, results = await risk_manager.pre_trade_check(
         user_id=check_request.user_id,
         symbol=check_request.symbol,
@@ -284,6 +407,7 @@ async def pre_trade_check(
 
 @router.get("/risk/metrics/daily")
 async def get_daily_metrics(
+    current_user: User = Depends(get_current_user_dependency),
     user_id: int = Query(..., gt=0, description="User ID"),
     db: AsyncSession = Depends(get_db)
 ):
@@ -320,6 +444,7 @@ async def get_daily_metrics(
 
 @router.get("/risk/breaches")
 async def get_risk_breaches(
+    current_user: User = Depends(get_current_user_dependency),
     user_id: Optional[int] = Query(default=None, description="Filter by user ID"),
     breach_type: Optional[str] = Query(default=None, description="Filter by breach type"),
     limit: int = Query(default=100, ge=1, le=1000, description="Maximum number of results"),
@@ -367,6 +492,7 @@ async def get_risk_breaches(
 @router.get("/risk/breaches/{breach_id}")
 async def get_risk_breach(
     breach_id: int,
+    current_user: User = Depends(get_current_user_dependency),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -402,6 +528,7 @@ async def get_risk_breach(
 
 @router.get("/risk/status")
 async def get_risk_status(
+    current_user: User = Depends(get_current_user_dependency),
     user_id: Optional[int] = Query(default=None, description="User ID (null for system-wide)"),
     db: AsyncSession = Depends(get_db)
 ):
@@ -464,6 +591,7 @@ async def get_risk_status(
 
 @router.get("/risk/metrics/history")
 async def get_metrics_history(
+    current_user: User = Depends(get_current_user_dependency),
     user_id: int = Query(..., gt=0, description="User ID"),
     days: int = Query(default=7, ge=1, le=90, description="Number of days to fetch"),
     db: AsyncSession = Depends(get_db)
@@ -514,6 +642,7 @@ async def get_metrics_history(
 
 @router.get("/risk/limits/check")
 async def check_risk_limits(
+    current_user: User = Depends(get_current_user_dependency),
     user_id: int = Query(..., gt=0, description="User ID"),
     db: AsyncSession = Depends(get_db)
 ):
