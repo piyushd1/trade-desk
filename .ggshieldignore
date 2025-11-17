@@ -1,0 +1,26 @@
+# GitGuardian Shield Ignore File
+# False positives and test files
+
+# Test result files (auto-generated)
+tests/scripts/*_test_*.md
+tests/scripts/streaming_test_*.md
+tests/scripts/market_data_test_*.md
+
+# Documentation examples
+docs/**/*.md
+
+# Scan result files
+SECURITY_SCAN_RESULTS.md
+ggshield_*.json
+trufflehog_*.json
+GIT_HISTORY_SCAN.md
+
+# Example environment files
+**/.env.example
+**/.env.*.example
+**/TEST_ENV.example
+
+# Test fixtures
+**/fixtures/**
+**/test_data/**
+

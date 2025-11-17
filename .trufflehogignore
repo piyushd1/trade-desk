@@ -1,0 +1,12 @@
+# TruffleHog Ignore File
+# False positives and test files
+
+tests/scripts/*_test_*.md
+docs/**/*.md
+SECURITY_SCAN_RESULTS.md
+ggshield_*.json
+trufflehog_*.json
+.env.example
+.env.*.example
+TEST_ENV.example
+

@@ -22,7 +22,11 @@ venv.bak/
 # Secrets and environment files
 .env
 .env.*
+!.env.example
+!.env.*.example
+!TEST_ENV.example
 secrets/
+TEST_ENV
 
 # Logs and runtime files
 logs/
@@ -44,17 +48,21 @@ tests/scripts/data_management_test_*.md
 tests/scripts/order_management_test_*.md
 tests/scripts/risk_management_test_*.md
 tests/scripts/zerodha_api_test_*.md
+tests/scripts/fundamentals_test_*.md
+tests/scripts/technical_analysis_test_*.md
 
-# Specific test scripts to ignore
-tests/scripts/test_streaming_apis.sh
+# Security scan results
+SECURITY_SCAN_RESULTS.md
+ggshield_*.json
+trufflehog_*.json
+GIT_HISTORY_SCAN.md
+manual_scan_*.txt
 
-# Utility scripts to ignore
-scripts/utilities/create_test_users.sh
-scripts/utilities/zerodha_reauth.sh
-backend/scripts/create_default_user.py
-
-# Test scripts with secrets
-tests/scripts/QUICK_TEST.sh
+# Cache files
+*.cache
+yfinance.cache
+.yfinance.cache
+/tmp/yfinance.cache
 
 # IDE and editor metadata
 .vscode/

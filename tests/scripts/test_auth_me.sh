@@ -1,10 +1,23 @@
 #!/bin/bash
 
+# Test /auth/me endpoint
+# 
+# Usage:
+#   export TEST_USERNAME=testuser
+#   export TEST_PASSWORD=testpass123
+#   export API_BASE_URL=http://localhost:8000  # Optional, defaults to localhost
+#   ./test_auth_me.sh
+
+# Configuration
+USERNAME="${TEST_USERNAME:?Error: TEST_USERNAME environment variable not set}"
+PASSWORD="${TEST_PASSWORD:?Error: TEST_PASSWORD environment variable not set}"
+BASE_URL="${API_BASE_URL:-http://localhost:8000}/api/v1"
+
 # Step 1: Login and get access token
 echo "Step 1: Logging in..."
-LOGIN_RESPONSE=$(curl -s -X POST https://piyushdev.com/api/v1/auth/login \
+LOGIN_RESPONSE=$(curl -s -X POST "${BASE_URL}/auth/login" \
   -H "Content-Type: application/json" \
-  -d '{"username":"piyushdev","password":"piyush123"}')
+  -d "{\"username\":\"${USERNAME}\",\"password\":\"${PASSWORD}\"}")
 
 echo "Login response:"
 echo "$LOGIN_RESPONSE" | python3 -m json.tool
@@ -24,7 +37,7 @@ echo ""
 # Step 3: Test /auth/me endpoint
 echo "Step 3: Testing /auth/me endpoint..."
 curl -s -H "Authorization: Bearer $ACCESS_TOKEN" \
-  https://piyushdev.com/api/v1/auth/me | python3 -m json.tool
+  "${BASE_URL}/auth/me" | python3 -m json.tool
 
 echo ""
 echo "Done!"

@@ -16,7 +16,7 @@ log() {
     echo "# Data Management API Test Results"
     echo ""
     echo "**Test Date:** $(date '+%Y-%m-%d %H:%M:%S')"
-    echo "**User Identifier:** RO0252"
+    echo "**User Identifier:** ${USER_IDENTIFIER}"
     echo ""
     echo "---"
     echo ""
@@ -32,9 +32,9 @@ echo ""
 # Check if ACCESS_TOKEN is set
 if [ -z "$ACCESS_TOKEN" ]; then
   log "⚠️  ACCESS_TOKEN not set. Logging in first..."
-  LOGIN_RESPONSE=$(curl -s -X POST https://piyushdev.com/api/v1/auth/login \
+  LOGIN_RESPONSE=$(curl -s -X POST ${API_BASE_URL:-http://localhost:8000}/api/v1/auth/login \
     -H "Content-Type: application/json" \
-    -d '{"username":"piyushdev","password":"piyush123"}')
+    -d '{"username":"${TEST_USERNAME}","password":"${TEST_PASSWORD}"}')
   
   ACCESS_TOKEN=$(echo "$LOGIN_RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
   
@@ -46,7 +46,7 @@ if [ -z "$ACCESS_TOKEN" ]; then
   echo ""
 fi
 
-USER_IDENTIFIER="RO0252"
+USER_IDENTIFIER="${USER_IDENTIFIER}"
 
 log "Testing with user_identifier: $USER_IDENTIFIER"
 echo ""
@@ -69,7 +69,7 @@ log "⏳ This may take a while (syncing all NSE instruments)..."
 echo ""
 
 RESPONSE=$(curl -s -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -X POST "https://piyushdev.com/api/v1/data/zerodha/data/instruments/sync" \
+  -X POST "${API_BASE_URL:-http://localhost:8000}/api/v1/data/zerodha/data/instruments/sync" \
   -H "Content-Type: application/json" \
   -d "{\"user_identifier\":\"$USER_IDENTIFIER\",\"exchange\":\"NSE\"}")
 
@@ -98,7 +98,7 @@ log "━━━━━━━━━━━━━━━━━━━━━━━━━
 log "2. Testing /data/zerodha/data/instruments/search (Public)"
 log "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-RESPONSE=$(curl -s "https://piyushdev.com/api/v1/data/zerodha/data/instruments/search?q=INFY&exchange=NSE&limit=5")
+RESPONSE=$(curl -s "${API_BASE_URL:-http://localhost:8000}/api/v1/data/zerodha/data/instruments/search?q=INFY&exchange=NSE&limit=5")
 
 echo "$RESPONSE" | python3 -m json.tool | tee -a "$OUTPUT_FILE"
 
@@ -128,7 +128,7 @@ log "⏳ Fetching historical data from Zerodha and storing in database..."
 echo ""
 
 RESPONSE=$(curl -s -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -X POST "https://piyushdev.com/api/v1/data/zerodha/data/historical/fetch" \
+  -X POST "${API_BASE_URL:-http://localhost:8000}/api/v1/data/zerodha/data/historical/fetch" \
   -H "Content-Type: application/json" \
   -d "{
     \"user_identifier\": \"$USER_IDENTIFIER\",
@@ -164,7 +164,7 @@ log "━━━━━━━━━━━━━━━━━━━━━━━━━
 log "4. Testing /data/zerodha/data/historical (Public)"
 log "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-RESPONSE=$(curl -s "https://piyushdev.com/api/v1/data/zerodha/data/historical?instrument_token=408065&interval=day&limit=10")
+RESPONSE=$(curl -s "${API_BASE_URL:-http://localhost:8000}/api/v1/data/zerodha/data/historical?instrument_token=408065&interval=day&limit=10")
 
 # Show first 30 lines in terminal, save full response to file
 echo "$RESPONSE" | python3 -m json.tool | head -30

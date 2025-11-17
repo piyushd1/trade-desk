@@ -52,7 +52,7 @@ log "━━━━━━━━━━━━━━━━━━━━━━━━━
 log "1. Testing /risk/config"
 log "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-RESPONSE=$(curl -s "https://piyushdev.com/api/v1/risk/config?user_id=$USER_ID")
+RESPONSE=$(curl -s "${API_BASE_URL:-http://localhost:8000}/api/v1/risk/config?user_id=$USER_ID")
 
 echo "$RESPONSE" | python3 -m json.tool | tee -a "$OUTPUT_FILE"
 
@@ -78,7 +78,7 @@ log "━━━━━━━━━━━━━━━━━━━━━━━━━
 log "2. Testing /risk/kill-switch/status"
 log "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-RESPONSE=$(curl -s "https://piyushdev.com/api/v1/risk/kill-switch/status")
+RESPONSE=$(curl -s "${API_BASE_URL:-http://localhost:8000}/api/v1/risk/kill-switch/status")
 
 echo "$RESPONSE" | python3 -m json.tool | tee -a "$OUTPUT_FILE"
 
@@ -105,7 +105,7 @@ log "━━━━━━━━━━━━━━━━━━━━━━━━━
 log "3. Testing /risk/status"
 log "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-RESPONSE=$(curl -s "https://piyushdev.com/api/v1/risk/status?user_id=$USER_ID")
+RESPONSE=$(curl -s "${API_BASE_URL:-http://localhost:8000}/api/v1/risk/status?user_id=$USER_ID")
 
 echo "$RESPONSE" | python3 -m json.tool | tee -a "$OUTPUT_FILE"
 
@@ -137,7 +137,7 @@ log "━━━━━━━━━━━━━━━━━━━━━━━━━
 log "4. Testing /risk/pre-trade-check"
 log "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-RESPONSE=$(curl -s -X POST "https://piyushdev.com/api/v1/risk/pre-trade-check" \
+RESPONSE=$(curl -s -X POST "${API_BASE_URL:-http://localhost:8000}/api/v1/risk/pre-trade-check" \
   -H "Content-Type: application/json" \
   -d "{
     \"user_id\": $USER_ID,

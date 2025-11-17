@@ -3,6 +3,12 @@
 #######################################################################
 # Test Script: Internal Platform Authentication
 # Tests: Login, JWT validation, /me endpoint, refresh, logout
+# 
+# Usage:
+#   export TEST_USERNAME=testuser
+#   export TEST_PASSWORD=testpass123
+#   export API_BASE_URL=http://localhost:8000  # Optional, defaults to localhost
+#   ./test_internal_auth.sh
 #######################################################################
 
 set -e
@@ -14,13 +20,11 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Configuration
-API_BASE="https://piyushdev.com/api/v1"
-BASIC_AUTH_USER="piyushdeveshwar"
-BASIC_AUTH_PASS="Lead@102938"
+API_BASE="${API_BASE_URL:-http://localhost:8000}/api/v1"
 
-# Test credentials
-TEST_USERNAME="admin"
-TEST_PASSWORD="admin123"
+# Test credentials from environment variables
+TEST_USERNAME="${TEST_USERNAME:?Error: TEST_USERNAME environment variable not set. Please set it before running this script.}"
+TEST_PASSWORD="${TEST_PASSWORD:?Error: TEST_PASSWORD environment variable not set. Please set it before running this script.}"
 
 echo "=================================================="
 echo "  Testing Internal Platform Authentication"
@@ -41,7 +45,7 @@ print_error() {
 }
 
 api_call() {
-    curl -s -u "$BASIC_AUTH_USER:$BASIC_AUTH_PASS" "$@"
+    curl -s "$@"
 }
 
 # Test 1: Health Check

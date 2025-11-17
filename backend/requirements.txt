@@ -26,6 +26,14 @@ aiofiles==24.1.0
 # Broker Integration
 kiteconnect==5.0.1
 
+# Data Analysis & Technical Analysis
+pandas==2.2.3
+numpy==1.26.4
+ta==0.11.0
+yfinance==0.2.36
+requests-cache==1.1.1
+requests-ratelimiter==0.4.2
+
 # Redis & Caching
 redis==5.2.0
 hiredis==3.0.0
@@ -41,7 +49,7 @@ python-multipart==0.0.12
 
 # Monitoring & Logging
 prometheus-client==0.21.1
-structlog==24.5.0
+structlog==24.4.0
 
 # Development & Testing
 pytest==9.0.0

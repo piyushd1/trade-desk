@@ -68,7 +68,7 @@ APP_DESCRIPTION = """
 4. Or include it in requests as: `Authorization: Bearer <your_token>`
 
 **Test Users:**
-- `piyushdev` / `piyush123` (user_id: 2)
+- `testuser` / `testpass123` (user_id: 1)
 - `admin` / `admin123` (user_id: 1)
 
 **Token Expiration:**
@@ -91,6 +91,8 @@ APP_DESCRIPTION = """
 - **Market Data** (`/data/zerodha`): LTP, quote, OHLC, historical data
 - **Data Management** (`/data/zerodha/data`): Instrument sync, historical storage
 - **Streaming** (`/data/zerodha/stream`): Real-time WebSocket data streams
+- **Technical Analysis** (`/technical-analysis`): Compute 60+ technical indicators from stored data
+- **Fundamentals** (`/fundamentals`): Fundamental ratios, analyst data, and symbol mapping from Yahoo Finance
 - **Audit** (`/audit`): Compliance and audit logs
 
 ### 📖 Using This Documentation
@@ -237,9 +239,9 @@ app = FastAPI(
     title=settings.APP_NAME,
     description=APP_DESCRIPTION,
     version=APP_VERSION,
-    docs_url="/docs" if settings.DEBUG else None,  # Disable in production
-    redoc_url="/redoc" if settings.DEBUG else None,  # Disable in production
-    openapi_url="/openapi.json" if settings.DEBUG else None,  # Disable in production
+    docs_url="/docs",  # Keep docs enabled (will be secured by Nginx)
+    redoc_url=None,  # Disable ReDoc completely
+    openapi_url="/openapi.json",  # Keep OpenAPI spec (will be secured by Nginx)
     # default_response_class=ORJSONResponse,  # Faster JSON serialization
     lifespan=lifespan,
 )

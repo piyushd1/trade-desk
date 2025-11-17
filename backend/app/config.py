@@ -106,6 +106,20 @@ class Settings(BaseSettings):
     GROWW_API_SECRET: str | None = Field(default=None, description="Groww API secret")
     GROWW_TOTP_SECRET: str | None = Field(default=None, description="Groww TOTP secret for 2FA")
 
+    # ===== Yahoo Finance / Fundamentals Configuration =====
+    YFINANCE_CACHE_ENABLED: bool = Field(
+        default=True, description="Enable database caching for yfinance data"
+    )
+    YFINANCE_CACHE_TTL_HOURS: int = Field(
+        default=24, description="Cache TTL for fundamental data in hours"
+    )
+    YFINANCE_RATE_LIMIT_PER_SECOND: float = Field(
+        default=0.9, description="Rate limit for yfinance API calls (requests per second)"
+    )
+    FUNDAMENTALS_UPDATE_THRESHOLD_HOURS: int = Field(
+        default=24, description="Minimum hours between fundamental data updates"
+    )
+
     # ===== Risk Management Parameters =====
     MAX_POSITION_VALUE: float = Field(
         default=50000.0, description="Maximum value per position in INR"

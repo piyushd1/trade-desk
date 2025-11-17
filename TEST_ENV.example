@@ -1,0 +1,20 @@
+# Test Environment Variables
+# Copy this file and set your actual values
+# Usage: source TEST_ENV.example (after setting your values)
+
+# Test Credentials
+export TEST_USERNAME=testuser
+export TEST_PASSWORD=testpass123
+
+# User Identifier (Zerodha state parameter or your user ID)
+export USER_IDENTIFIER=your_user_identifier_here
+
+# API Base URL (defaults to localhost if not set)
+export API_BASE_URL=http://localhost:8000
+
+# Example Usage:
+# 1. Copy this file: cp TEST_ENV.example TEST_ENV
+# 2. Edit TEST_ENV with your actual credentials
+# 3. Source it: source TEST_ENV
+# 4. Run tests: ./tests/scripts/test_fundamentals_apis.sh
+

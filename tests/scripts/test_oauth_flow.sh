@@ -10,10 +10,10 @@ echo ""
 STATE="$1"
 if [ -n "$STATE" ]; then
   echo "📋 Step 1: Getting Zerodha login URL for user identifier: $STATE"
-  RESPONSE=$(curl -s "https://piyushdev.com/api/v1/auth/zerodha/connect?state=$STATE")
+  RESPONSE=$(curl -s "${API_BASE_URL:-http://localhost:8000}/api/v1/auth/zerodha/connect?state=$STATE")
 else
   echo "📋 Step 1: Getting Zerodha login URL..."
-  RESPONSE=$(curl -s https://piyushdev.com/api/v1/auth/zerodha/connect)
+  RESPONSE=$(curl -s ${API_BASE_URL:-http://localhost:8000}/api/v1/auth/zerodha/connect)
 fi
 LOGIN_URL=$(echo $RESPONSE | python3 -c "import sys, json; print(json.load(sys.stdin)['login_url'])")
 
@@ -34,9 +34,9 @@ echo "3. Click 'Authorize' to grant access"
 echo ""
 echo "4. You'll be redirected to:"
 if [ -n "$STATE" ]; then
-  echo "   https://piyushdev.com/api/v1/auth/zerodha/callback?request_token=XXX&status=success&state=$STATE"
+  echo "   ${API_BASE_URL:-http://localhost:8000}/api/v1/auth/zerodha/callback?request_token=XXX&status=success&state=$STATE"
 else
-  echo "   https://piyushdev.com/api/v1/auth/zerodha/callback?request_token=XXX&status=success"
+  echo "   ${API_BASE_URL:-http://localhost:8000}/api/v1/auth/zerodha/callback?request_token=XXX&status=success"
 fi
 echo ""
 echo "5. The page will show your connection status"

@@ -37,9 +37,9 @@ echo ""
 # Check if ACCESS_TOKEN is set
 if [ -z "$ACCESS_TOKEN" ]; then
   log "⚠️  ACCESS_TOKEN not set. Logging in first..."
-  LOGIN_RESPONSE=$(curl -s -X POST https://piyushdev.com/api/v1/auth/login \
+  LOGIN_RESPONSE=$(curl -s -X POST ${API_BASE_URL:-http://localhost:8000}/api/v1/auth/login \
     -H "Content-Type: application/json" \
-    -d '{"username":"piyushdev","password":"piyush123"}')
+    -d '{"username":"${TEST_USERNAME}","password":"${TEST_PASSWORD}"}')
   
   ACCESS_TOKEN=$(echo "$LOGIN_RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
   
@@ -82,7 +82,7 @@ log "1. Testing /orders/preview (SAFE - no order will be placed)"
 log "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 RESPONSE=$(curl -s -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -X POST "https://piyushdev.com/api/v1/orders/preview" \
+  -X POST "${API_BASE_URL:-http://localhost:8000}/api/v1/orders/preview" \
   -H "Content-Type: application/json" \
   -d "{
     \"user_id\": $USER_ID,

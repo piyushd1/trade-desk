@@ -18,7 +18,7 @@ log() {
     echo "# Zerodha API Test Results"
     echo ""
     echo "**Test Date:** $(date '+%Y-%m-%d %H:%M:%S')"
-    echo "**User Identifier:** RO0252"
+    echo "**User Identifier:** ${USER_IDENTIFIER}"
     echo ""
     echo "---"
     echo ""
@@ -34,9 +34,9 @@ echo ""
 # Check if ACCESS_TOKEN is set
 if [ -z "$ACCESS_TOKEN" ]; then
   echo "⚠️  ACCESS_TOKEN not set. Logging in first..."
-  LOGIN_RESPONSE=$(curl -s -X POST https://piyushdev.com/api/v1/auth/login \
+  LOGIN_RESPONSE=$(curl -s -X POST ${API_BASE_URL:-http://localhost:8000}/api/v1/auth/login \
     -H "Content-Type: application/json" \
-    -d '{"username":"piyushdev","password":"piyush123"}')
+    -d '{"username":"${TEST_USERNAME}","password":"${TEST_PASSWORD}"}')
   
   ACCESS_TOKEN=$(echo "$LOGIN_RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
   
@@ -48,7 +48,7 @@ if [ -z "$ACCESS_TOKEN" ]; then
   echo ""
 fi
 
-USER_IDENTIFIER="RO0252"
+USER_IDENTIFIER="${USER_IDENTIFIER}"
 
 log "Testing with user_identifier: $USER_IDENTIFIER"
 echo ""
@@ -68,7 +68,7 @@ log "1. Testing /data/zerodha/profile"
 log "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 RESPONSE=$(curl -s -H "Authorization: Bearer $ACCESS_TOKEN" \
-  "https://piyushdev.com/api/v1/data/zerodha/profile?user_identifier=$USER_IDENTIFIER")
+  "${API_BASE_URL:-http://localhost:8000}/api/v1/data/zerodha/profile?user_identifier=$USER_IDENTIFIER")
 
 echo "$RESPONSE" | python3 -m json.tool | tee -a "$OUTPUT_FILE"
 
@@ -95,7 +95,7 @@ log "2. Testing /data/zerodha/margins"
 log "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 RESPONSE=$(curl -s -H "Authorization: Bearer $ACCESS_TOKEN" \
-  "https://piyushdev.com/api/v1/data/zerodha/margins?user_identifier=$USER_IDENTIFIER")
+  "${API_BASE_URL:-http://localhost:8000}/api/v1/data/zerodha/margins?user_identifier=$USER_IDENTIFIER")
 
 echo "$RESPONSE" | python3 -m json.tool | tee -a "$OUTPUT_FILE"
 
@@ -122,7 +122,7 @@ log "3. Testing /data/zerodha/positions"
 log "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 RESPONSE=$(curl -s -H "Authorization: Bearer $ACCESS_TOKEN" \
-  "https://piyushdev.com/api/v1/data/zerodha/positions?user_identifier=$USER_IDENTIFIER")
+  "${API_BASE_URL:-http://localhost:8000}/api/v1/data/zerodha/positions?user_identifier=$USER_IDENTIFIER")
 
 echo "$RESPONSE" | python3 -m json.tool | tee -a "$OUTPUT_FILE"
 
@@ -149,7 +149,7 @@ log "4. Testing /data/zerodha/holdings"
 log "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 RESPONSE=$(curl -s -H "Authorization: Bearer $ACCESS_TOKEN" \
-  "https://piyushdev.com/api/v1/data/zerodha/holdings?user_identifier=$USER_IDENTIFIER")
+  "${API_BASE_URL:-http://localhost:8000}/api/v1/data/zerodha/holdings?user_identifier=$USER_IDENTIFIER")
 
 echo "$RESPONSE" | python3 -m json.tool | tee -a "$OUTPUT_FILE"
 
@@ -176,7 +176,7 @@ log "5. Testing /data/zerodha/orders"
 log "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 RESPONSE=$(curl -s -H "Authorization: Bearer $ACCESS_TOKEN" \
-  "https://piyushdev.com/api/v1/data/zerodha/orders?user_identifier=$USER_IDENTIFIER")
+  "${API_BASE_URL:-http://localhost:8000}/api/v1/data/zerodha/orders?user_identifier=$USER_IDENTIFIER")
 
 echo "$RESPONSE" | python3 -m json.tool | tee -a "$OUTPUT_FILE"
 
@@ -203,7 +203,7 @@ log "6. Testing /data/zerodha/trades"
 log "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 RESPONSE=$(curl -s -H "Authorization: Bearer $ACCESS_TOKEN" \
-  "https://piyushdev.com/api/v1/data/zerodha/trades?user_identifier=$USER_IDENTIFIER")
+  "${API_BASE_URL:-http://localhost:8000}/api/v1/data/zerodha/trades?user_identifier=$USER_IDENTIFIER")
 
 echo "$RESPONSE" | python3 -m json.tool | tee -a "$OUTPUT_FILE"
 

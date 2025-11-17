@@ -15,9 +15,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-API_BASE="https://piyushdev.com/api/v1"
-BASIC_AUTH_USER="piyushdeveshwar"
-BASIC_AUTH_PASS="Lead@102938"
+API_BASE="${API_BASE_URL:-http://localhost:8000}/api/v1"
 
 # Get user identifier from args or use default
 USER_IDENTIFIER="${1:-RO0252}"
