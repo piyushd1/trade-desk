@@ -86,20 +86,6 @@ export API_BASE_URL=http://localhost:8000
    - `TEST_ENV.example` (with placeholders)
    - Test scripts (using environment variables)
 
-### Pre-commit Checks
-
-Run these checks before committing:
-
-```bash
-# Check for hardcoded secrets
-grep -r "piyushdev.com" . --exclude-dir=.git --exclude-dir=node_modules
-grep -r "piyush123" . --exclude-dir=.git --exclude-dir=node_modules
-grep -r "RO0252" . --exclude-dir=.git --exclude-dir=node_modules
-
-# Check .env files are not staged
-git status | grep ".env"
-```
-
 ## Code Review Checklist
 
 - [ ] No hardcoded credentials
