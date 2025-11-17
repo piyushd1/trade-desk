@@ -70,9 +70,10 @@ echo $! > /tmp/backend.pid
 
 ### Core Documentation
 - **[Setup Instructions](SETUP_INSTRUCTIONS.md)** - Complete setup guide
-- **[Zerodha Testing Guide](ZERODHA_TESTING_GUIDE.md)** - OAuth flow and API testing
-- **[Day 1 Work Summary](day_1_work.md)** - Initial implementation details
-- **[Testing Results](TESTING_RESULTS.md)** - Latest test results
+- **[Quick Start Guide](QUICK_START.md)** - Quick start guide
+- **[Security Guide](SECURITY.md)** - Security best practices
+- **[Testing Guide](TESTING.md)** - Testing documentation
+- **[Master Reference](MASTER_REFERENCE.md)** - Complete reference guide
 
 ### Planning & Architecture
 - **[Master PRD](docs/MASTER_PRD.md)** - Product requirements
@@ -82,12 +83,10 @@ echo $! > /tmp/backend.pid
 - **[Feature Specifications](docs/04_FEATURE_SPECIFICATIONS.md)** - Detailed features
 - **[Data Management](docs/05_DATA_MANAGEMENT.md)** - Data handling
 - **[Risk Management](docs/06_RISK_MANAGEMENT.md)** - Risk controls
+- **[Technical Analysis](docs/09_TECHNICAL_ANALYSIS.md)** - Technical indicators guide
+- **[Fundamentals](docs/10_FUNDAMENTALS.md)** - Fundamental data guide
 - **[Implementation Plan](docs/07_IMPLEMENTATION_PLAN.md)** - Development roadmap
 - **[Testing Strategy](docs/08_TESTING_STRATEGY.md)** - QA approach
-
-### Infrastructure
-- **[GCP Firewall Setup](GCP_FIREWALL_SETUP.md)** - Network configuration
-- **[SSL Setup](SSL_SETUP_COMPLETE.md)** - HTTPS configuration
 
 ---
 
@@ -110,19 +109,38 @@ echo $! > /tmp/backend.pid
 - [x] SEBI-compliant audit trail
 - [x] Audit log query APIs
 
-### 🚧 Phase 3 - Risk Controls (In Progress)
-- [ ] Position limits enforcement
-- [ ] Daily loss tracking
-- [ ] Kill switch mechanism
-- [ ] Pre-trade risk checks
+### ✅ Phase 3 - Risk Controls (Complete)
+- [x] Position limits enforcement
+- [x] Daily loss tracking
+- [x] Kill switch mechanism
+- [x] Pre-trade risk checks
+- [x] Risk metrics and monitoring
+- [x] Risk breach logging
 
-### 📋 Phase 4 - Trading Engine (Planned)
+### ✅ Phase 4 - Technical Analysis (Complete)
+- [x] 60+ technical indicators (RSI, MACD, Bollinger Bands, etc.)
+- [x] Momentum indicators (14 types)
+- [x] Volume indicators (9 types)
+- [x] Volatility indicators (5 types)
+- [x] Trend indicators (15 types)
+- [x] Runtime computation API
+- [x] Customizable parameters
+
+### ✅ Phase 5 - Fundamental Data (Complete)
+- [x] Yahoo Finance integration
+- [x] Fundamental ratios and metrics
+- [x] Analyst recommendations and estimates
+- [x] Symbol mapping (Zerodha ↔ Yahoo Finance)
+- [x] Caching and rate limiting
+- [x] Bulk data fetching
+
+### 📋 Phase 6 - Trading Engine (Planned)
 - [ ] Paper trading engine
 - [ ] Strategy SDK
 - [ ] Order placement APIs
 - [ ] Backtest engine
 
-### 🎨 Phase 5 - Frontend (Planned)
+### 🎨 Phase 7 - Frontend (Planned)
 - [ ] Dashboard UI
 - [ ] Strategy management
 - [ ] Real-time monitoring
@@ -181,27 +199,53 @@ trade-desk/
 - `GET /api/v1/health/status` - Detailed health status
 - `GET /api/v1/health/compliance` - Compliance status
 
-### Testing (Dev Only)
-- `GET /api/v1/test/zerodha/profile` - Test profile fetch
-- `GET /api/v1/test/zerodha/margins` - Test margins fetch
-- `GET /api/v1/test/zerodha/positions` - Test positions fetch
-- `GET /api/v1/test/zerodha/holdings` - Test holdings fetch
+### Technical Analysis
+- `GET /api/v1/technical-analysis/indicators/list` - List all available indicators
+- `POST /api/v1/technical-analysis/compute` - Compute technical indicators
+
+### Fundamentals
+- `GET /api/v1/fundamentals/{instrument_token}` - Get fundamental ratios
+- `GET /api/v1/fundamentals/{instrument_token}/analyst` - Get analyst data
+- `POST /api/v1/fundamentals/fetch` - Force fetch fresh data
+- `POST /api/v1/fundamentals/mapping/sync` - Sync symbol mappings
+
+### Risk Management
+- `GET /api/v1/risk/config` - Get risk configuration
+- `PUT /api/v1/risk/config` - Update risk limits
+- `POST /api/v1/risk/kill-switch` - Toggle kill switch
+- `GET /api/v1/risk/status` - Get comprehensive risk status
+- `POST /api/v1/risk/pre-trade-check` - Validate order against risk limits
+
+### Data Management
+- `GET /api/v1/data/zerodha/profile` - Get Zerodha profile
+- `GET /api/v1/data/zerodha/margins` - Get account margins
+- `GET /api/v1/data/zerodha/positions` - Get current positions
+- `POST /api/v1/data/zerodha/data/historical/fetch` - Fetch and store historical data
 
 ---
 
 ## 🧪 Testing
 
-### Automated Tests
-```bash
-# Run audit logging tests
-./test_audit_logging.sh
+### Environment Setup
+All test scripts require environment variables. See [TESTING.md](TESTING.md) for complete guide.
 
-# Run OAuth flow tests
-./test_oauth_flow.sh
+```bash
+# Set up test environment
+export TEST_USERNAME=testuser
+export TEST_PASSWORD=testpass123
+export USER_IDENTIFIER=your_user_id
+export API_BASE_URL=http://localhost:8000
+
+# Or use TEST_ENV file
+cp TEST_ENV.example TEST_ENV
+# Edit TEST_ENV with your credentials
+source TEST_ENV
 ```
 
 ### Manual Testing
-See [Zerodha Testing Guide](ZERODHA_TESTING_GUIDE.md) for detailed testing procedures.
+- See [TESTING.md](TESTING.md) for complete testing documentation
+- Use Swagger UI at `/docs` for interactive API testing
+- All endpoints require JWT authentication (except public endpoints)
 
 ---
 
@@ -260,20 +304,22 @@ JWT_SECRET_KEY=your_jwt_secret
 
 ## 📈 Roadmap
 
-### Q4 2025
+### Q4 2025 ✅ (Complete)
 - [x] Foundation & OAuth integration
 - [x] Token auto-refresh
 - [x] Audit logging
-- [ ] Risk controls
+- [x] Risk controls
+- [x] Technical Analysis (60+ indicators)
+- [x] Fundamental Data (Yahoo Finance integration)
+
+### Q1 2026 (In Progress)
 - [ ] Paper trading engine
-
-### Q1 2026
 - [ ] Strategy SDK
-- [ ] Order placement
-- [ ] Frontend dashboard
+- [ ] Order placement APIs
 - [ ] Backtest engine
+- [ ] Frontend dashboard
 
-### Q2 2026
+### Q2 2026 (Planned)
 - [ ] Groww integration
 - [ ] Advanced risk management
 - [ ] Real-time alerts
@@ -297,8 +343,9 @@ Private - All Rights Reserved
 
 For issues or questions:
 - Check [Documentation](docs/)
-- Review [Testing Guide](ZERODHA_TESTING_GUIDE.md)
+- Review [Testing Guide](TESTING.md)
 - See [Setup Instructions](SETUP_INSTRUCTIONS.md)
+- Review [Security Guide](SECURITY.md) for best practices
 
 ---
 
@@ -308,6 +355,9 @@ For issues or questions:
 - **FastAPI** - Web framework
 - **SQLAlchemy** - ORM
 - **Alembic** - Database migrations
+- **yfinance** - Fundamental data source
+- **ta** - Technical analysis library
+- **pandas** - Data manipulation
 
 ---
 
