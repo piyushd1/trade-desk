@@ -39,7 +39,7 @@ class OrderBase(BaseModel):
     **Note:** All order endpoints require the authenticated user to own the specified `user_identifier` session.
     """
     user_id: int = Field(..., description="Internal platform user ID", example=2)
-    user_identifier: str = Field(..., description="Zerodha OAuth user identifier (e.g., RO0252)", example="RO0252")
+    user_identifier: str = Field(..., description="Zerodha OAuth user identifier (e.g., YOUR_USER_IDENTIFIER)", example="YOUR_USER_IDENTIFIER")
     exchange: str = Field(..., description="Exchange (NSE, BSE, NFO, etc.)", example="NSE")
     tradingsymbol: str = Field(..., description="Trading symbol (e.g., INFY, RELIANCE)", example="INFY")
     transaction_type: str = Field(..., pattern="^(BUY|SELL)$", description="Transaction type: BUY or SELL", example="BUY")
@@ -150,7 +150,7 @@ async def _ensure_price_for_risk(
       -H "Content-Type: application/json" \\
       -d '{
         "user_id": 2,
-        "user_identifier": "RO0252",
+        "user_identifier": "YOUR_USER_IDENTIFIER",
         "exchange": "NSE",
         "tradingsymbol": "INFY",
         "transaction_type": "BUY",

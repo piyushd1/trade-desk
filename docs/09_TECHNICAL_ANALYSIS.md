@@ -250,7 +250,7 @@ curl -X POST https://piyushdev.com/api/v1/data/zerodha/data/instruments/sync \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "user_identifier": "RO0252",
+    "user_identifier": "YOUR_USER_IDENTIFIER",
     "exchange": "NSE"
   }'
 
@@ -259,7 +259,7 @@ curl -X POST https://piyushdev.com/api/v1/data/zerodha/data/historical/fetch \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "user_identifier": "RO0252",
+    "user_identifier": "YOUR_USER_IDENTIFIER",
     "instrument_token": 408065,
     "from_date": "2025-01-01T00:00:00",
     "to_date": "2025-11-15T23:59:59",

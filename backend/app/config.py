@@ -100,6 +100,9 @@ class Settings(BaseSettings):
     ZERODHA_REFRESH_EXPIRY_BUFFER_MINUTES: int = Field(
         default=60, description="Buffer time before token expiry to refresh"
     )
+    ZERODHA_USER_IDENTIFIER: str | None = Field(
+        default=None, description="Default Zerodha user identifier (e.g., YOUR_USER_IDENTIFIER). Can be overridden per request. Set in .env file."
+    )
 
     # ===== Groww Broker Integration =====
     GROWW_API_KEY: str | None = Field(default=None, description="Groww API key")

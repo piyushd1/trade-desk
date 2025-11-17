@@ -49,7 +49,7 @@ def _error(message: str):
     **Authentication:** Requires JWT Bearer token
     
     **Parameters:**
-    - `user_identifier`: Zerodha OAuth user identifier (e.g., RO0252). Must be owned by authenticated user.
+    - `user_identifier`: Zerodha OAuth user identifier (e.g., YOUR_USER_IDENTIFIER). Must be owned by authenticated user.
     
     **Returns:**
     - User ID, name, email
@@ -60,13 +60,13 @@ def _error(message: str):
     **Example:**
     ```bash
     curl -H "Authorization: Bearer $ACCESS_TOKEN" \\
-      "https://piyushdev.com/api/v1/data/zerodha/profile?user_identifier=RO0252"
+      "https://your-domain.com/api/v1/data/zerodha/profile?user_identifier=YOUR_USER_IDENTIFIER"
     ```
     """
 )
 async def get_profile(
     current_user: User = Depends(get_current_user_dependency),
-    user_identifier: str = Query(..., description="Zerodha OAuth user identifier (e.g., RO0252)", example="RO0252"),
+    user_identifier: str = Query(..., description="Zerodha OAuth user identifier (e.g., YOUR_USER_IDENTIFIER)", example="YOUR_USER_IDENTIFIER"),
     db: AsyncSession = Depends(get_db),
 ):
     try:

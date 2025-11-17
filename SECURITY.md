@@ -16,6 +16,7 @@ This document outlines security best practices for the TradeDesk application.
 - `JWT_SECRET_KEY` - JWT signing key (32+ characters)
 - `ZERODHA_API_KEY` - Zerodha API key
 - `ZERODHA_API_SECRET` - Zerodha API secret
+- `ZERODHA_USER_IDENTIFIER` - Zerodha user identifier (optional, can be set in .env for convenience)
 
 **Generating Secure Keys:**
 

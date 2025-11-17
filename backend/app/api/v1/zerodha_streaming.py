@@ -69,8 +69,8 @@ class StartStreamRequest(BaseModel):
     """Request to start a real-time data stream"""
     user_identifier: str = Field(
         ..., 
-        description="Zerodha OAuth user identifier (e.g., RO0252)",
-        example="RO0252"
+        description="Zerodha OAuth user identifier (e.g., YOUR_USER_IDENTIFIER)",
+        example="YOUR_USER_IDENTIFIER"
     )
     instruments: List[InstrumentSubscription] = Field(
         ..., 
@@ -173,7 +173,7 @@ async def _resolve_instrument_tokens(
     **Authentication:** Requires JWT Bearer token
     
     **Parameters:**
-    - `user_identifier`: Zerodha OAuth user identifier (e.g., RO0252)
+    - `user_identifier`: Zerodha OAuth user identifier (e.g., YOUR_USER_IDENTIFIER)
     - `instruments`: Array of instruments to subscribe to. Each instrument can use:
       - `instrument_token`: Direct token (e.g., 408065)
       - `tradingsymbol` + `exchange`: Symbol and exchange (e.g., "INFY", "NSE")
@@ -184,7 +184,7 @@ async def _resolve_instrument_tokens(
     curl -X POST -H "Authorization: Bearer $ACCESS_TOKEN" \\
       -H "Content-Type: application/json" \\
       -d '{
-        "user_identifier": "RO0252",
+        "user_identifier": "YOUR_USER_IDENTIFIER",
         "instruments": [
           {"instrument_token": 408065},
           {"tradingsymbol": "RELIANCE", "exchange": "NSE"}
@@ -326,7 +326,7 @@ async def stream_ticks(
     **Authentication:** Requires JWT Bearer token
     
     **Parameters:**
-    - `user_identifier`: Zerodha OAuth user identifier (e.g., RO0252)
+    - `user_identifier`: Zerodha OAuth user identifier (e.g., YOUR_USER_IDENTIFIER)
     
     **Returns:**
     - Session status (active, expired, etc.)
@@ -336,13 +336,13 @@ async def stream_ticks(
     **Example:**
     ```bash
     curl -H "Authorization: Bearer $ACCESS_TOKEN" \\
-      "https://piyushdev.com/api/v1/data/zerodha/session/status?user_identifier=RO0252"
+      "https://your-domain.com/api/v1/data/zerodha/session/status?user_identifier=YOUR_USER_IDENTIFIER"
     ```
     """
 )
 async def session_status(
     current_user: User = Depends(get_current_user_dependency),
-    user_identifier: str = Query(..., description="Zerodha OAuth user identifier (e.g., RO0252)", example="RO0252"),
+    user_identifier: str = Query(..., description="Zerodha OAuth user identifier (e.g., YOUR_USER_IDENTIFIER)", example="YOUR_USER_IDENTIFIER"),
     db: AsyncSession = Depends(get_db),
 ):
     session = await validate_user_owns_session(current_user, user_identifier, db)

@@ -45,7 +45,7 @@ class InstrumentSyncRequest(BaseModel):
     **Authentication:** Requires JWT Bearer token
     **Note:** This operation may take several minutes for large exchanges (NSE has 100K+ instruments).
     """
-    user_identifier: str = Field(..., description="Zerodha OAuth user identifier (e.g., RO0252)", example="RO0252")
+    user_identifier: str = Field(..., description="Zerodha OAuth user identifier (e.g., YOUR_USER_IDENTIFIER)", example="YOUR_USER_IDENTIFIER")
     exchange: str = Field(..., description="Exchange to sync: NSE, BSE, NFO, etc.", example="NSE")
 
 
@@ -55,7 +55,7 @@ class HistoricalFetchRequest(BaseModel):
     **Authentication:** Requires JWT Bearer token
     **Note:** Fetches data from Zerodha and stores it in local database for fast querying.
     """
-    user_identifier: str = Field(..., description="Zerodha OAuth user identifier (e.g., RO0252)", example="RO0252")
+    user_identifier: str = Field(..., description="Zerodha OAuth user identifier (e.g., YOUR_USER_IDENTIFIER)", example="YOUR_USER_IDENTIFIER")
     instrument_token: int = Field(..., description="Instrument token (e.g., 408065 for INFY)", example=408065)
     from_date: datetime = Field(..., description="Start date (ISO format: YYYY-MM-DDTHH:MM:SS)", example="2025-11-01T00:00:00")
     to_date: datetime = Field(..., description="End date (ISO format: YYYY-MM-DDTHH:MM:SS)", example="2025-11-13T23:59:59")
@@ -108,7 +108,7 @@ class HistoricalCleanupRequest(BaseModel):
     curl -X POST -H "Authorization: Bearer $ACCESS_TOKEN" \\
       -H "Content-Type: application/json" \\
       -d '{
-        "user_identifier": "RO0252",
+        "user_identifier": "YOUR_USER_IDENTIFIER",
         "exchange": "NSE"
       }' \\
       "https://piyushdev.com/api/v1/data/zerodha/data/instruments/sync"
@@ -216,7 +216,7 @@ async def instrument_detail(
     curl -X POST -H "Authorization: Bearer $ACCESS_TOKEN" \\
       -H "Content-Type: application/json" \\
       -d '{
-        "user_identifier": "RO0252",
+        "user_identifier": "YOUR_USER_IDENTIFIER",
         "instrument_token": 408065,
         "from_date": "2025-11-01T00:00:00",
         "to_date": "2025-11-13T23:59:59",
