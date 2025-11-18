@@ -191,7 +191,7 @@ async def _resolve_instrument_tokens(
         ],
         "mode": "ltp"
       }' \\
-      "https://piyushdev.com/api/v1/data/zerodha/stream/start"
+      "https://yourdomain.com/api/v1/data/zerodha/stream/start"
     ```
     
     **Returns:** Stream status with connection metadata and resolved instrument tokens.

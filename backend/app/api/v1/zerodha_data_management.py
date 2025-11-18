@@ -111,7 +111,7 @@ class HistoricalCleanupRequest(BaseModel):
         "user_identifier": "YOUR_USER_IDENTIFIER",
         "exchange": "NSE"
       }' \\
-      "https://piyushdev.com/api/v1/data/zerodha/data/instruments/sync"
+      "https://yourdomain.com/api/v1/data/zerodha/data/instruments/sync"
     ```
     
     **Returns:** Summary with count of instruments synced.
@@ -147,7 +147,7 @@ async def instruments_sync(
     
     **Example:**
     ```bash
-    curl "https://piyushdev.com/api/v1/data/zerodha/data/instruments/search?q=INFY&exchange=NSE&limit=5"
+    curl "https://yourdomain.com/api/v1/data/zerodha/data/instruments/search?q=INFY&exchange=NSE&limit=5"
     ```
     
     **Returns:** Array of matching instruments with details.
@@ -223,7 +223,7 @@ async def instrument_detail(
         "interval": "day",
         "oi": false
       }' \\
-      "https://piyushdev.com/api/v1/data/zerodha/data/historical/fetch"
+      "https://yourdomain.com/api/v1/data/zerodha/data/historical/fetch"
     ```
     
     **Returns:** Summary with count of candles fetched and stored.

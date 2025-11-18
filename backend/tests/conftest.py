@@ -22,9 +22,9 @@ from app.config import settings
 from app.database import Base, get_db
 from app.main import app
 
-# Test database URL - use in-memory SQLite for tests
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-TEST_SYNC_DATABASE_URL = "sqlite:///:memory:"
+# Test database URL - loaded from environment variables or use in-memory SQLite
+TEST_DATABASE_URL = settings.TEST_DATABASE_URL
+TEST_SYNC_DATABASE_URL = settings.TEST_SYNC_DATABASE_URL
 
 
 @pytest.fixture(scope="session")
@@ -128,11 +128,11 @@ def auth_headers():
 
 @pytest.fixture
 def sample_user_data():
-    """Sample user data for testing."""
+    """Sample user data for testing (loaded from environment variables)."""
     return {
-        "username": "testuser",
+        "username": settings.TEST_USER_USERNAME,
         "email": "test@example.com",
-        "password": "Test@123456",
+        "password": settings.TEST_USER_PASSWORD,
         "full_name": "Test User",
     }
 

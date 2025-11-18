@@ -7,7 +7,7 @@
 ## ✅ What's Ready
 
 1. **Complete REST APIs** for all Zerodha data types
-2. **Backend running** at `https://piyushdev.com`
+2. **Backend running** at `https://yourdomain.com`
 3. **Comprehensive documentation**
 4. **Automated test suite**
 5. **Ready to build** your trading application!
@@ -19,7 +19,7 @@
 ### Step 1: Find Your User ID
 
 ```bash
-curl -s "https://piyushdev.com/api/v1/auth/zerodha/session" | python3 -m json.tool
+curl -s "https://yourdomain.com/api/v1/auth/zerodha/session" | python3 -m json.tool
 ```
 
 Look for `user_identifier` in the response. That's your `USER_ID`.
@@ -33,16 +33,16 @@ Replace `YOUR_USER_ID` with the value from Step 1:
 export USER_ID="YOUR_USER_ID"
 
 # Get your profile
-curl "https://piyushdev.com/api/v1/data/zerodha/profile?user_id=$USER_ID" | python3 -m json.tool
+curl "https://yourdomain.com/api/v1/data/zerodha/profile?user_id=$USER_ID" | python3 -m json.tool
 
 # Get account margins (buying power)
-curl "https://piyushdev.com/api/v1/data/zerodha/margins?user_id=$USER_ID" | python3 -m json.tool
+curl "https://yourdomain.com/api/v1/data/zerodha/margins?user_id=$USER_ID" | python3 -m json.tool
 
 # Get current positions
-curl "https://piyushdev.com/api/v1/data/zerodha/positions?user_id=$USER_ID" | python3 -m json.tool
+curl "https://yourdomain.com/api/v1/data/zerodha/positions?user_id=$USER_ID" | python3 -m json.tool
 
 # Get real-time price
-curl -X POST "https://piyushdev.com/api/v1/data/zerodha/ltp?user_id=$USER_ID" \
+curl -X POST "https://yourdomain.com/api/v1/data/zerodha/ltp?user_id=$USER_ID" \
   -H "Content-Type: application/json" \
   -d '["NSE:INFY", "NSE:RELIANCE"]' | python3 -m json.tool
 ```
@@ -51,7 +51,7 @@ curl -X POST "https://piyushdev.com/api/v1/data/zerodha/ltp?user_id=$USER_ID" \
 
 ```bash
 # Get INFY daily candles for last 30 days
-curl "https://piyushdev.com/api/v1/data/zerodha/historical/408065?user_id=$USER_ID&from_date=2025-10-14&to_date=2025-11-13&interval=day" | python3 -m json.tool
+curl "https://yourdomain.com/api/v1/data/zerodha/historical/408065?user_id=$USER_ID&from_date=2025-10-14&to_date=2025-11-13&interval=day" | python3 -m json.tool
 ```
 
 ### Step 4: Run Full Test Suite
@@ -67,7 +67,7 @@ cd /home/trade-desk
 
 - **Complete Guide:** [ZERODHA_API_EXPLORATION.md](./ZERODHA_API_EXPLORATION.md)
 - **Day 3 Summary:** [DAY_3_ZERODHA_API_EXPLORATION.md](./DAY_3_ZERODHA_API_EXPLORATION.md)
-- **API Docs (Swagger):** https://piyushdev.com/docs
+- **API Docs (Swagger):** https://yourdomain.com/docs
 
 ---
 
@@ -130,10 +130,10 @@ cd /home/trade-desk
 
 ```bash
 # Check health
-curl https://piyushdev.com/health | python3 -m json.tool
+curl https://yourdomain.com/health | python3 -m json.tool
 
 # View all available endpoints
-curl https://piyushdev.com/api/v1/data/zerodha/capabilities | python3 -m json.tool
+curl https://yourdomain.com/api/v1/data/zerodha/capabilities | python3 -m json.tool
 
 # Backend logs
 tail -f /tmp/backend.log
@@ -163,5 +163,5 @@ You now have **complete access** to:
 
 **Time to build something awesome!** 🚀
 
-Questions? Check the comprehensive guides or explore the Swagger UI at https://piyushdev.com/docs
+Questions? Check the comprehensive guides or explore the Swagger UI at https://yourdomain.com/docs
 

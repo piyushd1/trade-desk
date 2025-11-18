@@ -67,10 +67,6 @@ APP_DESCRIPTION = """
 3. Click the **"Authorize"** button (top right) and paste your token
 4. Or include it in requests as: `Authorization: Bearer <your_token>`
 
-**Test Users:**
-- `testuser` / `testpass123` (user_id: 1)
-- `admin` / `admin123` (user_id: 1)
-
 **Token Expiration:**
 - Access tokens expire in 15 minutes
 - Use `POST /api/v1/auth/refresh` to get a new token
@@ -274,7 +270,7 @@ app.add_middleware(
 # Trusted host middleware (security)
 if settings.is_production and settings.APP_DOMAIN:
     app.add_middleware(
-        TrustedHostMiddleware, allowed_hosts=[settings.APP_DOMAIN, "*.piyushdev.com"]
+        TrustedHostMiddleware, allowed_hosts=[settings.APP_DOMAIN, f"*.{settings.APP_DOMAIN}"]
     )
 
 # GZip compression for responses

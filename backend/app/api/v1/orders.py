@@ -160,7 +160,7 @@ async def _ensure_price_for_risk(
         "price": 1500.0,
         "price_for_risk": 1500.0
       }' \\
-      "https://piyushdev.com/api/v1/orders/preview"
+      "https://yourdomain.com/api/v1/orders/preview"
     ```
     """
 )

@@ -182,7 +182,7 @@ async def get_fundamentals(
     **Example:**
     ```bash
     curl -H "Authorization: Bearer $TOKEN" \
-      "https://piyushdev.com/api/v1/fundamentals/408065"
+      "https://yourdomain.com/api/v1/fundamentals/408065"
     ```
     """
     service = FundamentalsService(db)
@@ -216,7 +216,7 @@ async def get_analyst_data(
     **Example:**
     ```bash
     curl -H "Authorization: Bearer $TOKEN" \
-      "https://piyushdev.com/api/v1/fundamentals/408065/analyst"
+      "https://yourdomain.com/api/v1/fundamentals/408065/analyst"
     ```
     """
     service = FundamentalsService(db)
@@ -250,7 +250,7 @@ async def force_fetch_fundamentals(
     **Example:**
     ```bash
     curl -X POST -H "Authorization: Bearer $TOKEN" \
-      "https://piyushdev.com/api/v1/fundamentals/fetch?instrument_token=408065&include_analyst=true"
+      "https://yourdomain.com/api/v1/fundamentals/fetch?instrument_token=408065&include_analyst=true"
     ```
     """
     service = FundamentalsService(db)
@@ -299,7 +299,7 @@ async def bulk_fetch_fundamentals(
         "instrument_tokens": [408065, 738561, 2953217],
         "include_analyst": true
       }' \
-      "https://piyushdev.com/api/v1/fundamentals/bulk-fetch"
+      "https://yourdomain.com/api/v1/fundamentals/bulk-fetch"
     ```
     """
     service = FundamentalsService(db)
@@ -328,7 +328,7 @@ async def get_symbol_mapping(
     **Example:**
     ```bash
     curl -H "Authorization: Bearer $TOKEN" \
-      "https://piyushdev.com/api/v1/fundamentals/mapping/408065"
+      "https://yourdomain.com/api/v1/fundamentals/mapping/408065"
     ```
     """
     service = SymbolMappingService(db)
@@ -364,7 +364,7 @@ async def sync_symbol_mappings(
     curl -X POST -H "Authorization: Bearer $TOKEN" \
       -H "Content-Type: application/json" \
       -d '{"exchange": "NSE", "limit": 100}' \
-      "https://piyushdev.com/api/v1/fundamentals/mapping/sync"
+      "https://yourdomain.com/api/v1/fundamentals/mapping/sync"
     ```
     """
     service = SymbolMappingService(db)

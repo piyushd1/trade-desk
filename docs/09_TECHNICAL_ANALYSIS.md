@@ -101,7 +101,7 @@ List all available indicators categorized by type.
 
 **Example:**
 ```bash
-curl https://piyushdev.com/api/v1/technical-analysis/indicators/list | python3 -m json.tool
+curl https://yourdomain.com/api/v1/technical-analysis/indicators/list | python3 -m json.tool
 ```
 
 ---
@@ -176,7 +176,7 @@ Compute technical indicators for an instrument from stored historical data.
 Compute RSI, MACD, and Bollinger Bands for INFY:
 
 ```bash
-curl -X POST https://piyushdev.com/api/v1/technical-analysis/compute \
+curl -X POST https://yourdomain.com/api/v1/technical-analysis/compute \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -192,7 +192,7 @@ curl -X POST https://piyushdev.com/api/v1/technical-analysis/compute \
 Compute SMA with custom periods:
 
 ```bash
-curl -X POST https://piyushdev.com/api/v1/technical-analysis/compute \
+curl -X POST https://yourdomain.com/api/v1/technical-analysis/compute \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -210,7 +210,7 @@ curl -X POST https://piyushdev.com/api/v1/technical-analysis/compute \
 Compute all available indicators by omitting the `indicators` parameter:
 
 ```bash
-curl -X POST https://piyushdev.com/api/v1/technical-analysis/compute \
+curl -X POST https://yourdomain.com/api/v1/technical-analysis/compute \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -225,7 +225,7 @@ curl -X POST https://piyushdev.com/api/v1/technical-analysis/compute \
 Compute indicators for 5-minute candles:
 
 ```bash
-curl -X POST https://piyushdev.com/api/v1/technical-analysis/compute \
+curl -X POST https://yourdomain.com/api/v1/technical-analysis/compute \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -246,7 +246,7 @@ Before computing indicators, ensure historical data is stored in the database:
 
 ```bash
 # 1. Sync instruments (if not already done)
-curl -X POST https://piyushdev.com/api/v1/data/zerodha/data/instruments/sync \
+curl -X POST https://yourdomain.com/api/v1/data/zerodha/data/instruments/sync \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -255,7 +255,7 @@ curl -X POST https://piyushdev.com/api/v1/data/zerodha/data/instruments/sync \
   }'
 
 # 2. Fetch and store historical data
-curl -X POST https://piyushdev.com/api/v1/data/zerodha/data/historical/fetch \
+curl -X POST https://yourdomain.com/api/v1/data/zerodha/data/historical/fetch \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -267,7 +267,7 @@ curl -X POST https://piyushdev.com/api/v1/data/zerodha/data/historical/fetch \
   }'
 
 # 3. Now compute indicators
-curl -X POST https://piyushdev.com/api/v1/technical-analysis/compute \
+curl -X POST https://yourdomain.com/api/v1/technical-analysis/compute \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -385,16 +385,16 @@ cd /home/trade-desk/tests/scripts
 
 ```bash
 # 1. Get JWT token
-export ACCESS_TOKEN=$(curl -s -X POST https://piyushdev.com/api/v1/auth/login \
+export ACCESS_TOKEN=$(curl -s -X POST https://yourdomain.com/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"piyushdev","password":"piyush123"}' \
+  -d '{"username":"trader","password":"piyush123"}' \
   | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
 
 # 2. List indicators
-curl https://piyushdev.com/api/v1/technical-analysis/indicators/list | python3 -m json.tool
+curl https://yourdomain.com/api/v1/technical-analysis/indicators/list | python3 -m json.tool
 
 # 3. Compute indicators
-curl -X POST https://piyushdev.com/api/v1/technical-analysis/compute \
+curl -X POST https://yourdomain.com/api/v1/technical-analysis/compute \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
