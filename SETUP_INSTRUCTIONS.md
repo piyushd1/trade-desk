@@ -73,28 +73,28 @@ This will:
 
 ### **Test 1: HTTPS Works**
 ```bash
-curl https://piyushdev.com/health
+curl https://yourdomain.com/health
 ```
 **Expected:** `{"status":"healthy","environment":"development","version":"1.0.0"}`
 
 ### **Test 2: API Status**
 ```bash
-curl https://piyushdev.com/api/v1/health/status
+curl https://yourdomain.com/api/v1/health/status
 ```
 **Expected:** JSON with database latency
 
 ### **Test 3: Compliance Check**
 ```bash
-curl https://piyushdev.com/api/v1/health/compliance
+curl https://yourdomain.com/api/v1/health/compliance
 ```
 **Expected:** SEBI compliance configuration
 
 ### **Test 4: Swagger UI**
-Visit in browser: **https://piyushdev.com/docs**
+Visit in browser: **https://yourdomain.com/docs**
 
 ### **Test 5: HTTP Redirect**
 ```bash
-curl -I http://piyushdev.com
+curl -I http://yourdomain.com
 ```
 **Expected:** `301 Moved Permanently` redirecting to HTTPS
 
@@ -112,8 +112,8 @@ After SSL is working, register your app at:
 | **App Name** | Trade Desk - Personal Algo Trading |
 | **Description** | Algorithmic trading platform for personal use |
 | **Type** | Connect |
-| **Redirect URL** | `https://piyushdev.com/api/v1/auth/zerodha/callback` |
-| **Postback URL** | `https://piyushdev.com/api/v1/postback/zerodha` |
+| **Redirect URL** | `https://yourdomain.com/api/v1/auth/zerodha/callback` |
+| **Postback URL** | `https://yourdomain.com/api/v1/postback/zerodha` |
 
 ### **What You'll Get:**
 - **API Key**: Public identifier
@@ -124,7 +124,7 @@ After SSL is working, register your app at:
 # Edit /home/trade-desk/backend/.env
 ZERODHA_API_KEY=your_api_key_here
 ZERODHA_API_SECRET=your_api_secret_here
-ZERODHA_REDIRECT_URL=https://piyushdev.com/api/v1/auth/zerodha/callback
+ZERODHA_REDIRECT_URL=https://yourdomain.com/api/v1/auth/zerodha/callback
 ```
 
 ---
@@ -132,7 +132,7 @@ ZERODHA_REDIRECT_URL=https://piyushdev.com/api/v1/auth/zerodha/callback
 ## 🔧 **Current Configuration Summary**
 
 ```yaml
-Domain: piyushdev.com (with www)
+Domain: yourdomain.com (with www)
 Static IP: 34.180.15.147
 DNS: ✅ Configured (verified with dig)
 Nginx: ✅ Configured and running
@@ -166,7 +166,7 @@ curl http://localhost/health
 
 ✅ DNS resolution:
 ```bash
-dig +short piyushdev.com
+dig +short yourdomain.com
 # Returns: 34.180.15.147
 ```
 
@@ -176,7 +176,7 @@ dig +short piyushdev.com
 
 1. **You do**: Configure GCP firewall (2 minutes)
 2. **Run**: `./setup_ssl.sh` (automated)
-3. **Test**: Access https://piyushdev.com
+3. **Test**: Access https://yourdomain.com
 4. **Register**: Create Zerodha app with your URLs
 5. **Continue**: We'll implement OAuth flow
 
@@ -205,7 +205,7 @@ tail -f /tmp/backend.log
 sudo tail -50 /var/log/letsencrypt/letsencrypt.log
 
 # Manual test
-sudo certbot certonly --nginx -d piyushdev.com --dry-run
+sudo certbot certonly --nginx -d yourdomain.com --dry-run
 ```
 
 ---

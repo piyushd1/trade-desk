@@ -92,7 +92,7 @@ class PreTradeCheckRequest(BaseModel):
     **Example:**
     ```bash
     curl -H "Authorization: Bearer $ACCESS_TOKEN" \\
-      "https://piyushdev.com/api/v1/risk/config?user_id=2"
+      "https://yourdomain.com/api/v1/risk/config?user_id=2"
     ```
     """
 )
@@ -221,7 +221,7 @@ async def update_risk_config(
     curl -X POST -H "Authorization: Bearer $ACCESS_TOKEN" \\
       -H "Content-Type: application/json" \\
       -d '{"enabled": false, "reason": "Emergency stop"}' \\
-      "https://piyushdev.com/api/v1/risk/kill-switch?user_id=2"
+      "https://yourdomain.com/api/v1/risk/kill-switch?user_id=2"
     ```
     
     **Example - Resume Trading:**
@@ -229,7 +229,7 @@ async def update_risk_config(
     curl -X POST -H "Authorization: Bearer $ACCESS_TOKEN" \\
       -H "Content-Type: application/json" \\
       -d '{"enabled": true, "reason": "Resuming normal operations"}' \\
-      "https://piyushdev.com/api/v1/risk/kill-switch?user_id=2"
+      "https://yourdomain.com/api/v1/risk/kill-switch?user_id=2"
     ```
     """
 )
@@ -311,7 +311,7 @@ async def toggle_kill_switch(
     **Example:**
     ```bash
     curl -H "Authorization: Bearer $ACCESS_TOKEN" \\
-      "https://piyushdev.com/api/v1/risk/kill-switch/status?user_id=2"
+      "https://yourdomain.com/api/v1/risk/kill-switch/status?user_id=2"
     ```
     """
 )
@@ -371,7 +371,7 @@ async def get_kill_switch_status(
         "quantity": 10,
         "price": 1500.0
       }' \\
-      "https://piyushdev.com/api/v1/risk/pre-trade-check"
+      "https://yourdomain.com/api/v1/risk/pre-trade-check"
     ```
     """
 )

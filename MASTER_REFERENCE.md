@@ -2,7 +2,7 @@
 
 **Last Updated:** November 12, 2025  
 **Repository:** https://github.com/piyushd1/trade-desk  
-**Production URL:** https://piyushdev.com
+**Production URL:** https://yourdomain.com
 
 ---
 
@@ -102,8 +102,8 @@ trade-desk/
 APP_NAME=TradeDesk
 APP_ENV=development
 DEBUG=True
-APP_DOMAIN=piyushdev.com
-APP_URL=https://piyushdev.com
+APP_DOMAIN=yourdomain.com
+APP_URL=https://yourdomain.com
 
 # Database
 DATABASE_URL=sqlite+aiosqlite:///./tradedesk.db
@@ -116,7 +116,7 @@ JWT_SECRET_KEY=<your-jwt-secret>
 # Zerodha
 ZERODHA_API_KEY=<your-api-key>
 ZERODHA_API_SECRET=<your-api-secret>
-ZERODHA_REDIRECT_URL=https://piyushdev.com/api/v1/auth/zerodha/callback
+ZERODHA_REDIRECT_URL=https://yourdomain.com/api/v1/auth/zerodha/callback
 
 # Token Refresh
 ZERODHA_AUTO_REFRESH_ENABLED=true
@@ -136,7 +136,7 @@ DEFAULT_TARGET_PROFIT_PCT=4.0
 **Location:** `/home/trade-desk/frontend/.env.local`
 
 ```bash
-NEXT_PUBLIC_API_URL=https://piyushdev.com/api/v1
+NEXT_PUBLIC_API_URL=https://yourdomain.com/api/v1
 NEXT_PUBLIC_APP_NAME=TradeDesk
 ```
 
@@ -315,8 +315,8 @@ sudo systemctl reload nginx
 ### Check Status
 ```bash
 # Health checks
-curl https://piyushdev.com/health
-curl https://piyushdev.com/api/v1/auth/brokers/status
+curl https://yourdomain.com/health
+curl https://yourdomain.com/api/v1/auth/brokers/status
 
 # Process status
 ps aux | grep uvicorn
@@ -471,16 +471,16 @@ npm run build
 ### Testing
 ```bash
 # Quick health check
-curl https://piyushdev.com/health
+curl https://yourdomain.com/health
 
 # Test OAuth URL generation
-curl "https://piyushdev.com/api/v1/auth/zerodha/connect?state=test"
+curl "https://yourdomain.com/api/v1/auth/zerodha/connect?state=test"
 
 # Check risk status
-curl "https://piyushdev.com/api/v1/risk/status?user_id=1"
+curl "https://yourdomain.com/api/v1/risk/status?user_id=1"
 
 # View audit logs
-curl "https://piyushdev.com/api/v1/audit/logs?limit=10"
+curl "https://yourdomain.com/api/v1/audit/logs?limit=10"
 ```
 
 ---

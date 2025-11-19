@@ -37,10 +37,16 @@ class Settings(BaseSettings):
     DEBUG: bool = Field(default=True, description="Enable debug mode (disable in production)")
     SECRET_KEY: str = Field(..., description="Secret key for session management (required)")
     APP_DOMAIN: str | None = Field(
-        default=None, description="Application domain (e.g., piyushdev.com)"
+        default=None, description="Application domain (e.g., example.com)"
     )
     APP_URL: str | None = Field(
-        default=None, description="Full application URL (e.g., https://piyushdev.com)"
+        default=None, description="Full application URL (e.g., https://example.com)"
+    )
+    API_BASE_URL: str = Field(
+        default="http://localhost:8000", description="Backend API base URL"
+    )
+    FRONTEND_URL: str = Field(
+        default="http://localhost:3000", description="Frontend application URL"
     )
 
     # ===== Server Configuration =====
@@ -76,6 +82,37 @@ class Settings(BaseSettings):
     # ===== Data Encryption =====
     ENCRYPTION_KEY: str = Field(
         ..., description="Fernet encryption key for sensitive data (required)"
+    )
+
+    # ===== Default Admin User Configuration =====
+    ADMIN_USERNAME: str | None = Field(
+        default=None, description="Default admin username for initial setup (optional)"
+    )
+    ADMIN_EMAIL: str | None = Field(
+        default=None, description="Default admin email for initial setup (optional)"
+    )
+    ADMIN_PASSWORD: str | None = Field(
+        default=None, description="Default admin password for initial setup (optional)"
+    )
+
+    # ===== Test Environment Configuration =====
+    TEST_DATABASE_URL: str = Field(
+        default="sqlite+aiosqlite:///:memory:", description="Test database URL"
+    )
+    TEST_SYNC_DATABASE_URL: str = Field(
+        default="sqlite:///:memory:", description="Synchronous test database URL"
+    )
+    TEST_USER_USERNAME: str = Field(
+        default="testuser", description="Test user username"
+    )
+    TEST_USER_PASSWORD: str = Field(
+        default="testpass123", description="Test user password"
+    )
+    TEST_ADMIN_USERNAME: str = Field(
+        default="admin", description="Test admin username"
+    )
+    TEST_ADMIN_PASSWORD: str = Field(
+        default="admin123", description="Test admin password"
     )
 
     # ===== SEBI Compliance Settings =====

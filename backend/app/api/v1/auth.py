@@ -185,11 +185,11 @@ class UserRegister(BaseModel):
 
 class UserLogin(BaseModel):
     """User login request
-    
+
     Use this to authenticate and get your JWT access token.
     """
-    username: str = Field(..., description="Your platform username", example="piyushdev")
-    password: str = Field(..., description="Your platform password", example="piyush123")
+    username: str = Field(..., description="Your platform username", example="trader")
+    password: str = Field(..., description="Your platform password", example="SecurePass123!")
 
 @router.post("/register")
 async def register(user_data: UserRegister, request: Request, db: AsyncSession = Depends(get_db)):
@@ -273,11 +273,11 @@ async def register(user_data: UserRegister, request: Request, db: AsyncSession =
     
     **Example:**
     ```bash
-    curl -X POST https://piyushdev.com/api/v1/auth/login \\
+    curl -X POST https://yourdomain.com/api/v1/auth/login \\
       -H "Content-Type: application/json" \\
-      -d '{"username":"piyushdev","password":"piyush123"}'
+      -d '{"username":"trader","password":"SecurePass123!"}'
     ```
-    
+
     **Response:**
     ```json
     {
@@ -287,8 +287,8 @@ async def register(user_data: UserRegister, request: Request, db: AsyncSession =
       "token_type": "bearer",
       "user": {
         "id": 2,
-        "username": "piyushdev",
-        "email": "piyush.dev@gmail.com",
+        "username": "trader",
+        "email": "trader@example.com",
         "role": "trader"
       }
     }
@@ -380,7 +380,7 @@ async def login(
     **Example:**
     ```bash
     curl -X POST -H "Authorization: Bearer $ACCESS_TOKEN" \\
-      "https://piyushdev.com/api/v1/auth/logout"
+      "https://yourdomain.com/api/v1/auth/logout"
     ```
     """
 )
@@ -433,7 +433,7 @@ class RefreshTokenRequest(BaseModel):
     
     **Example:**
     ```bash
-    curl -X POST https://piyushdev.com/api/v1/auth/refresh \\
+    curl -X POST https://yourdomain.com/api/v1/auth/refresh \\
       -H "Content-Type: application/json" \\
       -d '{"refresh_token": "your_refresh_token_here"}'
     ```
@@ -579,7 +579,7 @@ async def update_zerodha_credentials(
     **Example:**
     ```bash
     curl -H "Authorization: Bearer $ACCESS_TOKEN" \\
-      "https://piyushdev.com/api/v1/auth/me"
+      "https://yourdomain.com/api/v1/auth/me"
     ```
     
     **Use Case:** Verify your authentication status and get your user information.

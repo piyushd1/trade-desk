@@ -81,7 +81,7 @@ Get fundamental ratios and metrics for a stock.
 **Example:**
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
-  "https://piyushdev.com/api/v1/fundamentals/408065"
+  "https://yourdomain.com/api/v1/fundamentals/408065"
 ```
 
 **Response:**
@@ -122,7 +122,7 @@ Get analyst recommendations and estimates for a stock.
 **Example:**
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
-  "https://piyushdev.com/api/v1/fundamentals/408065/analyst"
+  "https://yourdomain.com/api/v1/fundamentals/408065/analyst"
 ```
 
 **Response:**
@@ -167,7 +167,7 @@ Force fetch fresh fundamental data from Yahoo Finance, bypassing cache.
 **Example:**
 ```bash
 curl -X POST -H "Authorization: Bearer $TOKEN" \
-  "https://piyushdev.com/api/v1/fundamentals/fetch?instrument_token=408065&include_analyst=true"
+  "https://yourdomain.com/api/v1/fundamentals/fetch?instrument_token=408065&include_analyst=true"
 ```
 
 **Response:**
@@ -206,7 +206,7 @@ curl -X POST -H "Authorization: Bearer $TOKEN" \
     "instrument_tokens": [408065, 738561, 2953217],
     "include_analyst": true
   }' \
-  "https://piyushdev.com/api/v1/fundamentals/bulk-fetch"
+  "https://yourdomain.com/api/v1/fundamentals/bulk-fetch"
 ```
 
 **Response:**
@@ -232,7 +232,7 @@ Get or create symbol mapping for an instrument.
 **Example:**
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
-  "https://piyushdev.com/api/v1/fundamentals/mapping/408065"
+  "https://yourdomain.com/api/v1/fundamentals/mapping/408065"
 ```
 
 **Response:**
@@ -271,7 +271,7 @@ Bulk sync symbol mappings for an exchange.
 curl -X POST -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"exchange": "NSE", "limit": 100}' \
-  "https://piyushdev.com/api/v1/fundamentals/mapping/sync"
+  "https://yourdomain.com/api/v1/fundamentals/mapping/sync"
 ```
 
 **Response:**
@@ -312,7 +312,7 @@ import asyncio
 
 async def fetch_nifty50_fundamentals():
     """Fetch fundamentals for Nifty 50 stocks."""
-    base_url = "https://piyushdev.com/api/v1"
+    base_url = "https://yourdomain.com/api/v1"
     token = "your_jwt_token"
     
     # Nifty 50 instrument tokens (example subset)
@@ -350,7 +350,7 @@ async def compare_pe_ratios(tokens: list):
     async with httpx.AsyncClient() as client:
         for token in tokens:
             response = await client.get(
-                f"https://piyushdev.com/api/v1/fundamentals/{token}",
+                f"https://yourdomain.com/api/v1/fundamentals/{token}",
                 headers={"Authorization": f"Bearer {your_token}"}
             )
             if response.status_code == 200:

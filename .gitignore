@@ -25,6 +25,10 @@ venv.bak/
 !.env.example
 !.env.*.example
 !TEST_ENV.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+frontend/.env.local
 secrets/
 TEST_ENV
 
@@ -78,6 +82,10 @@ Thumbs.db
 # Generated data
 backtest_results/
 data/tmp/
+
+# Generated configuration files
+nginx.conf
+!nginx.conf.template
 
 # Frontend
 frontend/node_modules/

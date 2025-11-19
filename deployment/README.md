@@ -167,9 +167,9 @@ crontab -e
 ## 📊 Monitoring
 
 ### Application Metrics
-- Backend health: `https://piyushdev.com/health`
+- Backend health: `https://yourdomain.com/health`
 - Frontend status: Check PM2 or systemd status
-- API documentation: `https://piyushdev.com/docs`
+- API documentation: `https://yourdomain.com/docs`
 
 ### System Monitoring
 - CPU, Memory, Disk usage via `monitor.sh`
@@ -234,7 +234,7 @@ For automated deployments:
    ```yaml
    - name: Deploy to server
      run: |
-       ssh user@piyushdev.com "cd /home/trade-desk && ./deployment/scripts/deploy.sh production"
+       ssh user@yourdomain.com "cd /home/trade-desk && ./deployment/scripts/deploy.sh production"
    ```
 
 2. **Webhook Deployment**:
