@@ -359,7 +359,3 @@ For issues or questions:
 - **ta** - Technical analysis library
 - **pandas** - Data manipulation
 
----
-
-**Built with ❤️ for algorithmic trading**
-
