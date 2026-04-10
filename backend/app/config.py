@@ -62,12 +62,21 @@ class Settings(BaseSettings):
     )
 
     # ===== Redis Configuration =====
-    REDIS_URL: str = Field(..., description="Redis connection URL for caching (required)")
+    REDIS_URL: str = Field(
+        default="redis://localhost:6379/0",
+        description="Redis connection URL for caching (optional in development, required in production)",
+    )
     REDIS_CACHE_TTL: int = Field(default=3600, description="Default cache TTL in seconds (1 hour)")
 
     # ===== Celery Configuration =====
-    CELERY_BROKER_URL: str = Field(..., description="Celery broker URL (required)")
-    CELERY_RESULT_BACKEND: str = Field(..., description="Celery result backend URL (required)")
+    CELERY_BROKER_URL: str = Field(
+        default="redis://localhost:6379/1",
+        description="Celery broker URL (optional in development, required in production)",
+    )
+    CELERY_RESULT_BACKEND: str = Field(
+        default="redis://localhost:6379/2",
+        description="Celery result backend URL (optional in development, required in production)",
+    )
 
     # ===== JWT Authentication =====
     JWT_SECRET_KEY: str = Field(..., description="JWT signing key (required)")
@@ -116,7 +125,10 @@ class Settings(BaseSettings):
     )
 
     # ===== SEBI Compliance Settings =====
-    STATIC_IP: str = Field(..., description="Static IP address for SEBI compliance (required)")
+    STATIC_IP: str = Field(
+        default="0.0.0.0",
+        description="Static IP address for SEBI compliance (set to your actual static IP in production)",
+    )
     OPS_LIMIT: int = Field(default=10, description="Operations per second limit (SEBI requirement)")
     MAX_DAILY_TRADES: int = Field(
         default=50, description="Maximum trades per day (SEBI requirement)"
@@ -189,7 +201,7 @@ class Settings(BaseSettings):
 
         env_file = ".env"
         case_sensitive = True
-        extra = "forbid"  # Fail on unknown environment variables
+        extra = "ignore"  # Ignore unknown environment variables (e.g., from system env or .env extras)
 
     @field_validator("APP_ENV")
     @classmethod

@@ -26,13 +26,14 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
  * - Session information
  */
 export default function DashboardPage() {
-  const { userIdentifier, session, refreshStatus } = useAuth();
+  const { userIdentifier, session, refreshStatus, user } = useAuth();
 
-  // Fetch risk status
+  // Fetch risk status - use actual user ID, not hardcoded
   const { data: riskStatus, isLoading: riskLoading } = useQuery({
-    queryKey: ["risk-status", 1],
-    queryFn: () => riskApi.getStatus(1),
+    queryKey: ["risk-status", user?.id],
+    queryFn: () => riskApi.getStatus(user?.id),
     refetchInterval: 30000, // Refetch every 30 seconds
+    enabled: user?.id !== undefined,
   });
 
   // Fetch health

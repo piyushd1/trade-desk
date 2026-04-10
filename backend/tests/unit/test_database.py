@@ -3,6 +3,7 @@ Unit tests for database module.
 """
 
 import pytest
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import Base, check_db_connection, get_db_context
@@ -25,8 +26,8 @@ class TestDatabase:
             assert db is not None
             assert isinstance(db, AsyncSession)
             
-            # Test that we can execute a simple query
-            result = await db.execute("SELECT 1")
+            # Test that we can execute a simple query (SQLAlchemy 2.0 requires text())
+            result = await db.execute(text("SELECT 1"))
             assert result is not None
     
     async def test_check_db_connection(self, test_engine):

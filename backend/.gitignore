@@ -111,6 +111,11 @@ ENV/
 env.bak/
 venv.bak/
 
+# Project specific environment files (never commit real .env files)
+.env.*
+!.env.example
+!.env.test.example
+
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -160,6 +165,7 @@ temp/
 tmp/
 .env.*
 !.env.example
+!.env.test.example
 
 # Test files
 test_*.py
