@@ -163,9 +163,6 @@ logs/
 *.sqlite3
 temp/
 tmp/
-.env.*
-!.env.example
-!.env.test.example
 
 # Test files
 test_*.py
