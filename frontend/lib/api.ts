@@ -119,6 +119,102 @@ export interface UpdateZerodhaConfigPayload {
   redirectUrl?: string;
 }
 
+// ===== Portfolio / Zerodha data types =====
+
+export interface Holding {
+  tradingsymbol: string;
+  exchange: string;
+  instrument_token: number;
+  isin: string;
+  product: string;
+  price: number;
+  quantity: number;
+  used_quantity: number;
+  t1_quantity: number;
+  realised_quantity: number;
+  authorised_quantity: number;
+  authorised_date: string;
+  opening_quantity: number;
+  collateral_quantity: number;
+  collateral_type: string;
+  discrepancy: boolean;
+  average_price: number;
+  last_price: number;
+  close_price: number;
+  pnl: number;
+  day_change: number;
+  day_change_percentage: number;
+}
+
+export interface Position {
+  tradingsymbol: string;
+  exchange: string;
+  instrument_token: number;
+  product: string;
+  quantity: number;
+  overnight_quantity: number;
+  multiplier: number;
+  average_price: number;
+  close_price: number;
+  last_price: number;
+  value: number;
+  pnl: number;
+  m2m: number;
+  unrealised: number;
+  realised: number;
+  buy_quantity: number;
+  buy_price: number;
+  buy_value: number;
+  buy_m2m: number;
+  sell_quantity: number;
+  sell_price: number;
+  sell_value: number;
+  sell_m2m: number;
+  day_buy_quantity: number;
+  day_buy_price: number;
+  day_buy_value: number;
+  day_sell_quantity: number;
+  day_sell_price: number;
+  day_sell_value: number;
+}
+
+export interface PositionsResponse {
+  day: Position[];
+  net: Position[];
+}
+
+export interface MarginSegment {
+  enabled: boolean;
+  net: number;
+  available: {
+    adhoc_margin: number;
+    cash: number;
+    opening_balance: number;
+    live_balance: number;
+    collateral: number;
+    intraday_payin: number;
+  };
+  utilised: {
+    debits: number;
+    exposure: number;
+    m2m_realised: number;
+    m2m_unrealised: number;
+    option_premium: number;
+    payout: number;
+    span: number;
+    holding_sales: number;
+    turnover: number;
+    liquid_collateral: number;
+    stock_collateral: number;
+    delivery: number;
+  };
+}
+
+export interface MarginsResponse {
+  equity?: MarginSegment;
+  commodity?: MarginSegment;
+}
+
 // Auth API
 export const authApi = {
   getZerodhaLoginUrl: async (state?: string) => {
@@ -291,6 +387,45 @@ export const auditApi = {
 export const healthApi = {
   check: async () => {
     const { data } = await api.get('/health/status');
+    return data;
+  },
+};
+
+// Portfolio API — wraps Zerodha portfolio endpoints
+export const portfolioApi = {
+  /**
+   * Get long-term holdings (CNC/delivery positions).
+   * @param userIdentifier Zerodha OAuth user identifier stored in localStorage
+   */
+  getHoldings: async (userIdentifier: string) => {
+    const params = new URLSearchParams({ user_identifier: userIdentifier });
+    const { data } = await api.get<ApiResponse<Holding[]>>(
+      `/data/zerodha/holdings?${params}`
+    );
+    return data;
+  },
+
+  /**
+   * Get current day/net positions (intraday + carry-forward).
+   * @param userIdentifier Zerodha OAuth user identifier stored in localStorage
+   */
+  getPositions: async (userIdentifier: string) => {
+    const params = new URLSearchParams({ user_identifier: userIdentifier });
+    const { data } = await api.get<ApiResponse<PositionsResponse>>(
+      `/data/zerodha/positions?${params}`
+    );
+    return data;
+  },
+
+  /**
+   * Get account margins / available capital.
+   * @param userIdentifier Zerodha OAuth user identifier stored in localStorage
+   */
+  getMargins: async (userIdentifier: string) => {
+    const params = new URLSearchParams({ user_identifier: userIdentifier });
+    const { data } = await api.get<ApiResponse<MarginsResponse>>(
+      `/data/zerodha/margins?${params}`
+    );
     return data;
   },
 };

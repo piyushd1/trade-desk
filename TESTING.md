@@ -183,6 +183,48 @@ You need to authenticate with Zerodha first:
 4. **Run tests locally** before pushing
 5. **Review test output** for sensitive data before sharing
 
+## Python Unit Tests (pytest)
+
+The backend has pytest-based unit tests in `backend/tests/`.
+
+### Required environment variables
+
+The backend needs a minimum set of environment variables to start. Use the provided template:
+
+```bash
+cd backend
+cp .env.test.example .env.test
+```
+
+### Running unit tests
+
+```bash
+cd backend
+
+# Using the .env.test file (export vars then run)
+env $(grep -v '^#' .env.test | xargs) python -m pytest tests/unit/ -v --no-cov
+
+# Or export the minimum required vars inline:
+SECRET_KEY=test-secret \
+  JWT_SECRET_KEY=test-jwt-secret \
+  DATABASE_URL=sqlite+aiosqlite:///:memory: \
+  ENCRYPTION_KEY=$(python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())") \
+  python -m pytest tests/unit/ -v --no-cov
+```
+
+### What the unit tests cover
+
+| Test file | Coverage |
+|-----------|----------|
+| `tests/unit/test_config.py` | Settings loading, validation, environment detection |
+| `tests/unit/test_database.py` | Database engine, connection check, Base metadata |
+
+### Known test requirements
+
+- **REDIS_URL, CELERY_BROKER_URL, CELERY_RESULT_BACKEND**: These now have defaults and do not need to be set for tests.
+- **STATIC_IP**: Defaults to `0.0.0.0` for SEBI compliance display; does not need to be set for tests.
+- **SECRET_KEY, JWT_SECRET_KEY, ENCRYPTION_KEY, DATABASE_URL**: These are still required (they are security-critical and must be set explicitly).
+
 ## Additional Resources
 
 - [Security Best Practices](SECURITY.md)

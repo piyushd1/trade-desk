@@ -9,7 +9,8 @@ import {
   Settings, 
   LogOut,
   Menu,
-  X
+  X,
+  Briefcase,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import { AuthGuard } from "@/components/features/auth/AuthGuard";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Portfolio", href: "/dashboard/portfolio", icon: Briefcase },
   { name: "Risk Management", href: "/dashboard/risk", icon: Shield },
   { name: "Audit Logs", href: "/dashboard/audit", icon: FileText },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },

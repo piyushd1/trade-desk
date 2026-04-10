@@ -8,3 +8,4 @@ yarn.lock
 pnpm-lock.yaml
 *.min.js
 *.min.css
+tsconfig.tsbuildinfo
