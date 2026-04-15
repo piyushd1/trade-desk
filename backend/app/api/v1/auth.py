@@ -20,6 +20,7 @@ from app.models import BrokerSession, User
 from app.utils.crypto import encrypt, decrypt
 from app.services.audit_service import audit_service
 from app.services.zerodha_service import zerodha_service
+from app.services.indstocks_service import indstocks_service
 from app.services.auth_service import auth_service
 from fastapi import Request
 
@@ -90,6 +91,29 @@ class ZerodhaCredentialsUpdate(BaseModel):
     )
 
 
+class IndStocksTokenSubmit(BaseModel):
+    """
+    Payload for POST /auth/indstocks/token.
+
+    IndStocks uses a static bearer token pasted from web.indstocks.com
+    rather than OAuth. The user generates a fresh token on the IndMoney
+    web UI (24-hour validity, no programmatic refresh) and submits it
+    here. The endpoint validates the token against IndStocks'
+    /user/profile, and on success stores the encrypted token in
+    broker_sessions bound to the authenticated TradeDesk user.
+    """
+
+    access_token: str = Field(
+        ...,
+        min_length=20,
+        description=(
+            "IndStocks access token pasted from web.indstocks.com "
+            "(API section). Do NOT include a 'Bearer ' prefix — "
+            "IndStocks uses the raw token in the Authorization header."
+        ),
+    )
+
+
 def _calculate_zerodha_expiry(now: Optional[datetime] = None) -> datetime:
     """Calculate the expected Zerodha token expiry time (6 AM IST)."""
     ist = timezone(timedelta(hours=5, minutes=30))
@@ -98,6 +122,24 @@ def _calculate_zerodha_expiry(now: Optional[datetime] = None) -> datetime:
     if now_ist >= expiry_ist:
         expiry_ist += timedelta(days=1)
     return expiry_ist.astimezone(timezone.utc)
+
+
+def _calculate_indstocks_expiry(now: Optional[datetime] = None) -> datetime:
+    """
+    Calculate the expected IndStocks token expiry time (now + 24 hours).
+
+    IndStocks tokens are valid for 24 hours from the moment they're generated
+    in the IndMoney web UI, not a hard daily cutoff like Zerodha's 6 AM IST.
+    We don't know the exact moment of generation on the IndMoney side, so we
+    approximate by treating "now" (the moment we validate + store the token)
+    as t=0 and expiring 24 hours later. This is conservative: the user's
+    token is actually at least a few seconds old by the time we see it, so
+    the real expiry is slightly sooner than what we store.
+    """
+    base = now or datetime.now(timezone.utc)
+    if base.tzinfo is None:
+        base = base.replace(tzinfo=timezone.utc)
+    return base + timedelta(hours=24)
 
 
 def _mask_token(token: str) -> str:
@@ -111,14 +153,22 @@ async def _store_broker_session(
     user_identifier: str,
     user_id: int,
     broker: str,
-    session_data: Dict
+    session_data: Dict,
+    expires_at: Optional[datetime] = None,
 ) -> BrokerSession:
-    """Store or update the broker session with encrypted tokens"""
+    """
+    Store or update the broker session with encrypted tokens.
+
+    If ``expires_at`` is not supplied, the default is the Zerodha 6 AM IST
+    calculation — this preserves the original single-broker behavior for
+    existing callers. New broker integrations (IndStocks, future brokers)
+    should compute their own expiry and pass it in explicitly.
+    """
     encrypted_token = encrypt(session_data["access_token"])
     refresh_token = session_data.get("refresh_token")
     refresh_token_encrypted = encrypt(refresh_token) if refresh_token else None
     public_token = session_data.get("public_token")
-    
+
     # Convert meta data, handling datetime objects
     meta = {}
     for k, v in session_data.items():
@@ -128,8 +178,9 @@ async def _store_broker_session(
                 meta[k] = v.isoformat()
             else:
                 meta[k] = v
-    
-    expires_at = _calculate_zerodha_expiry()
+
+    if expires_at is None:
+        expires_at = _calculate_zerodha_expiry()
     now_utc = datetime.now(timezone.utc)
     
     # Convert timezone-aware datetimes to naive UTC for SQLite compatibility
@@ -794,7 +845,7 @@ async def zerodha_oauth_callback(
 async def groww_totp_connect(db: AsyncSession = Depends(get_db)):
     """
     Connect to Groww using TOTP
-    
+
     TODO: Implement
     - Generate TOTP
     - Authenticate with Groww
@@ -807,15 +858,198 @@ async def groww_totp_connect(db: AsyncSession = Depends(get_db)):
     }
 
 
+# ============================================================================
+# IndStocks (IndMoney) endpoints
+# ============================================================================
+#
+# IndStocks has no OAuth flow — the user generates a static bearer token on
+# web.indstocks.com and pastes it into the UI. So the auth surface is much
+# smaller than Zerodha's:
+#
+#   POST /auth/indstocks/token     -> validate + store a freshly pasted token
+#   GET  /auth/indstocks/session   -> query the stored session
+#
+# No /connect (no OAuth URL), no /callback (no redirect target), no
+# /session/claim (the token is submitted while the user is already
+# authenticated with their JWT, so user_id is known at insert time).
+# ============================================================================
+
+
+@router.post("/indstocks/token")
+async def submit_indstocks_token(
+    payload: IndStocksTokenSubmit,
+    request: Request,
+    current_user: User = Depends(get_current_user_dependency),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Validate and store an IndStocks (IndMoney) access token.
+
+    The caller must be authenticated with a TradeDesk JWT. The supplied
+    `access_token` is validated by calling IndStocks' `/user/profile`
+    endpoint — if the profile fetch succeeds, the token is encrypted and
+    stored in `broker_sessions` with `user_id = current_user.id` and
+    `expires_at = now + 24h` (IndStocks tokens are valid for 24 hours
+    with no programmatic refresh).
+
+    Unlike the Zerodha flow, there is no separate claim step — the
+    session is bound to the authenticated user immediately.
+    """
+    access_token = payload.access_token.strip()
+    if not access_token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="access_token is required",
+        )
+
+    # Validate the token against IndStocks' /user/profile
+    validation = await indstocks_service.validate_token(access_token)
+    if validation.get("status") != "success":
+        # Log the failed attempt so it shows up in the audit view
+        await audit_service.log_event(
+            action="indstocks_token_submit_failed",
+            entity_type="broker_connection",
+            entity_id=str(current_user.id),
+            details={
+                "broker": "indstocks",
+                "error_message": validation.get("message", "unknown error"),
+            },
+            user_id=current_user.id,
+            username=current_user.username,
+            ip_address=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+            db=db,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=validation.get("message", "IndStocks token validation failed"),
+        )
+
+    # Token is valid — build a session_data dict compatible with
+    # _store_broker_session and persist the row with the IndStocks expiry.
+    indstocks_user_id = validation.get("user_id")
+    user_identifier = (
+        indstocks_user_id
+        or settings.INDSTOCKS_USER_IDENTIFIER
+        or f"indstocks-{current_user.id}"
+    )
+    session_data = {
+        "access_token": access_token,
+        # IndStocks never returns a refresh_token — no point populating it
+        "user_id": indstocks_user_id,
+        "email": validation.get("email"),
+        "first_name": validation.get("first_name"),
+        "is_nse_onboarded": validation.get("is_nse_onboarded"),
+        "broker": "indstocks",
+    }
+    expires_at = _calculate_indstocks_expiry()
+    broker_session = await _store_broker_session(
+        db=db,
+        user_identifier=user_identifier,
+        user_id=current_user.id,
+        broker="indstocks",
+        session_data=session_data,
+        expires_at=expires_at,
+    )
+
+    # Also set the service-level default so backend calls that don't yet
+    # read from broker_sessions (e.g. B4 scheduler before it's wired up)
+    # can still use a valid token.
+    indstocks_service.update_credentials(access_token)
+
+    await audit_service.log_event(
+        action="indstocks_token_submit_success",
+        entity_type="broker_connection",
+        entity_id=user_identifier,
+        details={
+            "broker": "indstocks",
+            "indstocks_user_id": indstocks_user_id,
+            "email": validation.get("email"),
+            "expires_at": broker_session.expires_at.isoformat()
+                if broker_session.expires_at
+                else None,
+        },
+        user_id=current_user.id,
+        username=current_user.username,
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+        db=db,
+    )
+
+    return {
+        "status": "success",
+        "message": "IndStocks token stored successfully",
+        "user_identifier": user_identifier,
+        "session": {
+            "broker": broker_session.broker,
+            "status": broker_session.status,
+            "expires_at": broker_session.expires_at.isoformat()
+                if broker_session.expires_at
+                else None,
+            "meta": broker_session.meta,
+        },
+    }
+
+
+@router.get("/indstocks/session")
+async def get_indstocks_session(
+    current_user: User = Depends(get_current_user_dependency),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Fetch the stored IndStocks session for the authenticated user.
+
+    Returns the session row without the decrypted token — callers never
+    need the raw token, only the status/expiry metadata.
+    """
+    result = await db.execute(
+        select(BrokerSession).where(
+            BrokerSession.user_id == current_user.id,
+            BrokerSession.broker == "indstocks",
+        )
+    )
+    broker_session = result.scalar_one_or_none()
+
+    if not broker_session:
+        return {
+            "status": "not_found",
+            "message": "No IndStocks session stored for this user",
+        }
+
+    now_utc_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+    is_expired = (
+        broker_session.expires_at is not None
+        and broker_session.expires_at <= now_utc_naive
+    )
+
+    return {
+        "status": "success",
+        "session": {
+            "broker": broker_session.broker,
+            "user_identifier": broker_session.user_identifier,
+            "status": "expired" if is_expired else broker_session.status,
+            "expires_at": broker_session.expires_at.isoformat()
+                if broker_session.expires_at
+                else None,
+            "is_expired": is_expired,
+            "meta": broker_session.meta,
+            "updated_at": broker_session.updated_at.isoformat()
+                if broker_session.updated_at
+                else None,
+        },
+    }
+
+
 @router.get("/brokers/status")
 async def broker_status(db: AsyncSession = Depends(get_db)):
     """
     Get broker connection status
-    
+
     Returns:
         dict: Status of all broker connections
     """
     zerodha_configured = bool(zerodha_service.api_key and zerodha_service.api_secret)
+    indstocks_configured = bool(indstocks_service.default_access_token)
 
     return {
         "status": "success",
@@ -829,6 +1063,20 @@ async def broker_status(db: AsyncSession = Depends(get_db)):
                     "Ready for OAuth authentication"
                     if zerodha_configured
                     else "Provide API key and secret to enable Zerodha"
+                ),
+            },
+            "indstocks": {
+                "configured": indstocks_configured,
+                "auth_model": "static_token",
+                "token_set": indstocks_configured,
+                "status": "configured" if indstocks_configured else "not_configured",
+                "message": (
+                    "Default access token loaded (rotated every 24 hours — "
+                    "users can also submit their own token via "
+                    "POST /auth/indstocks/token)"
+                    if indstocks_configured
+                    else "Paste a token from https://indstocks.com/app/api-trading "
+                    "via POST /auth/indstocks/token (no OAuth)"
                 ),
             },
             "groww": {
