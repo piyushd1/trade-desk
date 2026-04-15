@@ -51,10 +51,12 @@ Raspberry Pi 4B (4 GB)
 
 This is the order that was verified end-to-end during the 2026-04-15 deploy.
 
-### 1. Base OS
+### 1. Base OS + host tools
 
 ```bash
-sudo apt update && sudo apt upgrade -y && sudo reboot
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y sqlite3      # needed for the restore-drill script (decoupled from the container)
+sudo reboot
 ```
 
 ### 2. Tailscale (native on the host, NOT in Docker)
@@ -269,15 +271,58 @@ sudo systemctl restart trade-desk.service           # pick up new images
 td-sudo-off
 ```
 
-### Backup & restore *(Phase B Stage 5 — not yet implemented)*
+### Backup & restore
 
-Once `deployment/scripts/backup-sqlite.sh` and the cron are in place (per the active plan), a nightly backup of the SQLite DB + env files will run automatically. Until then, manual backup is:
+Two scripts under `deployment/scripts/`, both runnable as the regular Pi user (no sudo), both idempotent:
+
+**Nightly backup** — `backup-sqlite.sh`
+- Uses native `sqlite3 .backup` via `docker compose exec backend` (WAL-safe, atomic under concurrent writes)
+- Runs integrity check on the copy *inside the container* (fails hard on corruption)
+- Default target: `$HOME/tradedesk-backups/<YYYY-MM-DD>/`
+- Writes `tradedesk-<timestamp>.db` plus `backend.env` and `frontend.env.production` alongside (mode 600)
+- `flock`-protected so two concurrent runs don't race
+- Rotates backups older than 30 days (override with `TRADEDESK_BACKUP_KEEP_DAYS`)
+- Override target with `TRADEDESK_BACKUP_ROOT` if you later move to an external HDD
+
+```bash
+bash ~/trade-desk/deployment/scripts/backup-sqlite.sh
+# or with custom target:
+TRADEDESK_BACKUP_ROOT=/mnt/external/tradedesk bash ~/trade-desk/deployment/scripts/backup-sqlite.sh
+```
+
+**Monthly restore drill** — `restore-drill.sh`
+- Picks the most recent backup under `TRADEDESK_BACKUP_ROOT`
+- Copies to a scratch location (`/var/tmp/tradedesk-restore-drill/`, cleaned up on exit)
+- Runs `PRAGMA integrity_check` on the copy — fails loudly if anything is wrong
+- Verifies critical tables exist (`users`, `broker_sessions`, `audit_logs`, `system_events`) and logs row counts
+- Requires `sqlite3` installed on the host (`sudo apt install sqlite3`) — decoupled from the container on purpose so you can still recover if the container is broken
+- Returns non-zero if the drill fails; cron MAILTO will alert you if wired
+
+```bash
+bash ~/trade-desk/deployment/scripts/restore-drill.sh
+```
+
+**Automating both via cron**:
+
+```bash
+sudo install -m 0644 -o root -g root \
+  ~/trade-desk/deployment/cron/tradedesk-backup /etc/cron.d/tradedesk-backup
+
+# Create the log file cron will append to
+sudo touch /var/log/tradedesk-backup.log
+sudo chown piyushdev:piyushdev /var/log/tradedesk-backup.log
+sudo chmod 640 /var/log/tradedesk-backup.log
+```
+
+Schedule: nightly backup at 02:00 local, monthly restore drill at 03:00 on the 1st. Both run as the `piyushdev` user (not root). Adjust the cron file's user field if your Pi user has a different name.
+
+**Manual emergency backup** (if the scripts are unavailable):
 
 ```bash
 docker compose -f ~/trade-desk/deployment/docker/docker-compose.prod.yml \
   exec -T backend sqlite3 /app/data/tradedesk.db \
   ".backup '/app/data/manual-backup-$(date +%Y%m%d).db'"
-docker cp trade-desk-backend:/app/data/manual-backup-*.db ~/backups/
+docker cp trade-desk-backend:/app/data/manual-backup-*.db ~/tradedesk-backups/
 ```
 
 ---

@@ -1,0 +1,30 @@
+# TradeDesk — nightly backup + monthly restore drill cron
+#
+# Install: sudo cp deployment/cron/tradedesk-backup /etc/cron.d/tradedesk-backup
+#          sudo chmod 644 /etc/cron.d/tradedesk-backup
+#          sudo chown root:root /etc/cron.d/tradedesk-backup
+#
+# Runs as the piyushdev user (not root). The backup script uses `docker
+# compose exec` which needs the user to be in the docker group — confirmed
+# during Stage 2 setup.
+#
+# Log output goes to /var/log/tradedesk-backup.log. Create and chmod once:
+#   sudo touch /var/log/tradedesk-backup.log
+#   sudo chown piyushdev:piyushdev /var/log/tradedesk-backup.log
+#   sudo chmod 640 /var/log/tradedesk-backup.log
+#
+# IST is UTC+5:30 — Pi system timezone should be Asia/Kolkata (verify:
+# `timedatectl`). All times below are local time.
+
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+MAILTO=""
+
+# Nightly backup at 2:00 AM local time (expected to be IST).
+# Pi will be idle, market is closed, scheduler isn't writing snapshots.
+0 2 * * *      piyushdev   /home/piyushdev/trade-desk/deployment/scripts/backup-sqlite.sh >> /var/log/tradedesk-backup.log 2>&1
+
+# Monthly restore drill on the 1st of each month at 3:00 AM local time.
+# Verifies the most recent backup is actually restorable. Failure exits
+# non-zero and cron will send mail if MAILTO is set (currently off).
+0 3 1 * *      piyushdev   /home/piyushdev/trade-desk/deployment/scripts/restore-drill.sh >> /var/log/tradedesk-backup.log 2>&1
