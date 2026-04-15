@@ -10,83 +10,86 @@
 
 ## 🎯 Overview
 
-TradeDesk is a personal algorithmic trading platform designed for SEBI compliance, featuring:
+TradeDesk is a personal algorithmic trading platform designed for SEBI compliance. It runs on a **Raspberry Pi 4B at home** with **Tailscale-only remote access** — no public ports forwarded, no public internet exposure.
 
-- **Multi-broker support** (Zerodha, Groww)
-- **Automated token management** with refresh
-- **SEBI-compliant audit logging** (7-year retention)
-- **Risk management** controls
-- **Strategy SDK** for custom algorithms
-- **Paper trading** engine
-- **Real-time monitoring** and alerts
+- **Multi-broker support** — Zerodha Kite Connect (live) + IndStocks/IndMoney (in progress)
+- **Encrypted token storage** with automatic refresh where supported
+- **SEBI-compliant audit logging** with 7-year retention and immutable records
+- **Risk management** — position limits, daily loss tracking, kill switch
+- **Portfolio data pipeline** — 15-min snapshots into SQLite, aggregated metrics (Sharpe/Sortino/VaR/alpha/beta)
+- **Backup / restore drills** using native SQLite `.backup` command
+- **Strategy SDK + paper trading engine** (planned, Phase 2)
+
+### Stack
+
+- **Backend**: FastAPI + SQLAlchemy (async, aiosqlite) + Alembic migrations + APScheduler
+- **Frontend**: Next.js 15 (standalone output) + React Query + Tailwind CSS
+- **Database**: SQLite with WAL mode (Postgres/TimescaleDB in a later phase)
+- **Broker SDKs**: `kiteconnect` (Zerodha), IndStocks REST (in progress)
+- **Deployment**: Docker Compose + systemd + Tailscale Serve on Raspberry Pi OS Bookworm (arm64)
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Running TradeDesk
 
-### Prerequisites
-- Python 3.12+
-- PostgreSQL/SQLite
-- Zerodha Kite Connect API credentials
-- SSL certificate (Let's Encrypt)
+Two supported paths: **local dev** (bare-metal Python, for working on the code) and **Pi production** (Docker + systemd + Tailscale, for the always-on deployment).
 
-### Installation
+### Local development
 
 ```bash
-# Clone repository
-git clone https://github.com/piyushd1/trade-desk.git
+git clone git@github.com:piyushd1/trade-desk.git
 cd trade-desk
 
-# Setup backend
+# Backend
 cd backend
-python -m venv venv
-source venv/bin/activate
+python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your credentials
-
-# Run migrations
+cp .env.example .env                      # edit with your local values
 alembic upgrade head
+python scripts/create_default_user.py     # seed admin
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
-# Start server
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+# Frontend (separate terminal)
+cd ../frontend
+cp .env.local.example .env.local          # NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+npm install
+npm run dev                                # http://localhost:3000
 ```
 
-### Production Deployment
+### Raspberry Pi production deployment
 
-```bash
-# Start backend (production)
-cd /home/trade-desk/backend
-source venv/bin/activate
-nohup python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/backend.log 2>&1 &
-echo $! > /tmp/backend.pid
-```
+**→ Read [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)** — the authoritative runbook.
+
+It covers the full end-to-end: first-time Pi setup, Tailscale + Docker install, env file configuration, systemd unit installation, Docker image build, Alembic migrations, admin user seeding, Zerodha OAuth handshake, the `td-sudo` scoped-sudo toggle system, smoke tests, reboot verification, daily operations (log watching, re-auth, backup), and a full troubleshooting reference for every gotcha discovered during the 2026-04-15 deploy.
 
 ---
 
 ## 📚 Documentation
 
-### Core Documentation
-- **[Setup Instructions](SETUP_INSTRUCTIONS.md)** - Complete setup guide
-- **[Quick Start Guide](QUICK_START.md)** - Quick start guide
-- **[Security Guide](SECURITY.md)** - Security best practices
-- **[Testing Guide](TESTING.md)** - Testing documentation
-- **[Master Reference](MASTER_REFERENCE.md)** - Complete reference guide
+### How to run this
+- **[Deployment Guide](docs/DEPLOYMENT.md)** — authoritative runbook for Pi production deployment
+- **[Pi Deployment Handoff State](docs/plans/HANDOFF-2026-04-15.md)** — current state, discovered gotchas, commits
+- **[Active plan](docs/plans/2026-04-15-pi-deployment-plan.md)** — original phased deployment plan (Phase 1)
 
-### Planning & Architecture
-- **[Master PRD](docs/MASTER_PRD.md)** - Product requirements
-- **[Executive Summary](docs/01_EXECUTIVE_SUMMARY.md)** - Project overview
-- **[Compliance Requirements](docs/02_COMPLIANCE_REQUIREMENTS.md)** - SEBI compliance
-- **[Technical Architecture](docs/03_TECHNICAL_ARCHITECTURE.md)** - System design
-- **[Feature Specifications](docs/04_FEATURE_SPECIFICATIONS.md)** - Detailed features
-- **[Data Management](docs/05_DATA_MANAGEMENT.md)** - Data handling
-- **[Risk Management](docs/06_RISK_MANAGEMENT.md)** - Risk controls
-- **[Technical Analysis](docs/09_TECHNICAL_ANALYSIS.md)** - Technical indicators guide
-- **[Fundamentals](docs/10_FUNDAMENTALS.md)** - Fundamental data guide
-- **[Implementation Plan](docs/07_IMPLEMENTATION_PLAN.md)** - Development roadmap
-- **[Testing Strategy](docs/08_TESTING_STRATEGY.md)** - QA approach
+### Core documentation
+- **[Setup Instructions](SETUP_INSTRUCTIONS.md)** — legacy bare-metal setup guide
+- **[Quick Start Guide](QUICK_START.md)** — legacy quick start
+- **[Security Guide](SECURITY.md)** — security best practices
+- **[Testing Guide](TESTING.md)** — testing documentation
+- **[Master Reference](MASTER_REFERENCE.md)** — complete reference guide
+
+### Planning & architecture
+- **[Master PRD](docs/MASTER_PRD.md)** — product requirements
+- **[Executive Summary](docs/01_EXECUTIVE_SUMMARY.md)** — project overview
+- **[Compliance Requirements](docs/02_COMPLIANCE_REQUIREMENTS.md)** — SEBI compliance
+- **[Technical Architecture](docs/03_TECHNICAL_ARCHITECTURE.md)** — system design
+- **[Feature Specifications](docs/04_FEATURE_SPECIFICATIONS.md)** — detailed features
+- **[Data Management](docs/05_DATA_MANAGEMENT.md)** — data handling
+- **[Risk Management](docs/06_RISK_MANAGEMENT.md)** — risk controls
+- **[Technical Analysis](docs/09_TECHNICAL_ANALYSIS.md)** — technical indicators guide
+- **[Fundamentals](docs/10_FUNDAMENTALS.md)** — fundamental data guide
+- **[Implementation Plan](docs/07_IMPLEMENTATION_PLAN.md)** — development roadmap
+- **[Testing Strategy](docs/08_TESTING_STRATEGY.md)** — QA approach
 
 ---
 
@@ -134,36 +137,78 @@ echo $! > /tmp/backend.pid
 - [x] Caching and rate limiting
 - [x] Bulk data fetching
 
-### 📋 Phase 6 - Trading Engine (Planned)
+### ✅ Phase 6 - Pi Deployment (Complete as of 2026-04-15)
+- [x] `docker-compose.prod.yml` — backend + frontend, arm64 pinned, log rotation, named volumes for SQLite data + logs
+- [x] Three systemd units — migrate oneshot, main stack, tailscale-serve oneshot
+- [x] Idempotent `setup-pi.sh` installer with template substitution
+- [x] `td-sudo` scoped-NOPASSWD toggle system
+- [x] Zerodha OAuth handshake end-to-end (including session-claim fix)
+- [x] HTTPS via Tailscale Serve (Let's Encrypt on `*.ts.net`)
+- [x] SQLite WAL mode + pragmas enforced at engine level
+
+### 🚧 Phase 7 - Multi-broker data plumbing (In Progress)
+- [ ] IndStocks/IndMoney broker adapter (BaseBroker impl + auth flow)
+- [ ] Multi-broker `portfolio_snapshots` pipeline with APScheduler
+- [ ] NSE market calendar (`config/nse_holidays.yaml`)
+- [ ] Broker-agnostic `/portfolio/{holdings,positions,margins}` aggregated endpoints
+- [ ] `/portfolio/history` + `/portfolio/metrics` (alpha/beta/Sharpe/Sortino/VaR/drawdown) + `/portfolio/sectors`
+- [ ] SQLite backup/restore drill cron (Stage 5)
+- [ ] Backend API surface audit doc
+
+### 📋 Phase 8 - Trading Engine (Planned)
 - [ ] Paper trading engine
 - [ ] Strategy SDK
 - [ ] Order placement APIs
 - [ ] Backtest engine
 
-### 🎨 Phase 7 - Frontend (Planned)
-- [ ] Dashboard UI
-- [ ] Strategy management
-- [ ] Real-time monitoring
-- [ ] Audit log viewer
+### 🎨 Phase 9 - Frontend rebuild (Planned)
+- [ ] Tailwind design system port from `tradedesk-designs/` (The Financial Atelier)
+- [ ] New navigation shell (top / side / mobile bottom nav)
+- [ ] Portfolio Insights bento-grid page (replaces current dashboard + portfolio)
+- [ ] Analysis Lab page (Monte Carlo / Mean Variance / Black-Litterman — Phase 10+)
+- [ ] Paper Trading page
+- [ ] Settings + Risk rework with edit mutations
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Repo layout
 
 ```
 trade-desk/
-├── backend/               # FastAPI backend
+├── backend/                       # FastAPI backend
 │   ├── app/
-│   │   ├── api/          # API endpoints
-│   │   ├── models/       # Database models
-│   │   ├── services/     # Business logic
-│   │   ├── brokers/      # Broker integrations
-│   │   └── utils/        # Utilities
-│   ├── alembic/          # Database migrations
-│   └── tests/            # Test suite
-├── docs/                 # Documentation
-├── scripts/              # Utility scripts
-└── tests/                # Integration tests
+│   │   ├── api/v1/                # HTTP routes (auth, portfolio, risk, audit, ...)
+│   │   ├── brokers/               # BaseBroker + per-broker adapters (zerodha, indstocks)
+│   │   ├── models/                # SQLAlchemy ORM models
+│   │   ├── services/              # Long-lived singletons (zerodha, indstocks, audit, token-refresh, snapshot-scheduler)
+│   │   ├── utils/                 # Pure helpers (crypto, market_calendar, portfolio_metrics, sector_map)
+│   │   └── config.py              # Pydantic settings loader
+│   ├── alembic/versions/          # DB migrations
+│   ├── config/                    # nse_holidays.yaml, sector_map.yaml
+│   ├── scripts/                   # create_default_user.py, one-off admin scripts
+│   └── tests/                     # pytest suite
+├── frontend/                      # Next.js 15 (standalone output for Docker)
+│   ├── app/                       # App Router pages
+│   ├── components/                # UI primitives + layouts
+│   ├── lib/                       # api.ts axios client, hooks
+│   └── public/                    # static assets
+├── deployment/
+│   ├── docker/
+│   │   ├── docker-compose.prod.yml           # Pi production stack
+│   │   ├── Dockerfile.backend                # arm64, uvicorn --workers 1
+│   │   └── Dockerfile.frontend               # Next.js standalone
+│   ├── systemd/*.service.template            # trade-desk-migrate, trade-desk, trade-desk-tailscale-serve
+│   ├── scripts/
+│   │   ├── setup-pi.sh                       # idempotent unit installer
+│   │   ├── td-sudo-on, td-sudo-off           # scoped NOPASSWD toggle
+│   │   └── td-sudo-install.sh                # installs the above to /usr/local/bin + /etc/trade-desk/sudoers
+│   └── sudoers/trade-desk                    # sudoers template (not live until td-sudo-on)
+├── tradedesk-designs/             # Future-frontend design mockups + design system spec
+├── docs/
+│   ├── DEPLOYMENT.md              # authoritative Pi runbook
+│   ├── plans/                     # phased plans + handoff state
+│   └── 0[1-9]_*.md                # PRD, architecture, compliance, features, ...
+└── tests/                         # integration tests
 ```
 
 ---
@@ -306,24 +351,34 @@ JWT_SECRET_KEY=your_jwt_secret
 
 ### Q4 2025 ✅ (Complete)
 - [x] Foundation & OAuth integration
-- [x] Token auto-refresh
-- [x] Audit logging
-- [x] Risk controls
+- [x] Token management + audit logging (SEBI-compliant, 7-year retention ready)
+- [x] Risk controls (position/loss limits, kill switch)
 - [x] Technical Analysis (60+ indicators)
 - [x] Fundamental Data (Yahoo Finance integration)
 
-### Q1 2026 (In Progress)
-- [ ] Paper trading engine
-- [ ] Strategy SDK
-- [ ] Order placement APIs
-- [ ] Backtest engine
-- [ ] Frontend dashboard
+### Q1 2026 ✅ (Complete)
+- [x] Raspberry Pi 4B deployment (Docker + systemd + Tailscale)
+- [x] Zerodha OAuth end-to-end (including session-claim flow)
+- [x] Scoped `td-sudo` toggle system for safe systemctl access
+- [x] Tailscale Serve TLS + path routing
 
-### Q2 2026 (Planned)
-- [ ] Groww integration
-- [ ] Advanced risk management
-- [ ] Real-time alerts
-- [ ] Mobile app
+### Q2 2026 (In Progress — Phase B)
+- [ ] IndStocks/IndMoney broker adapter + auth flow
+- [ ] Multi-broker portfolio snapshot pipeline (15-min cron, market-calendar-aware)
+- [ ] Portfolio history + metrics + sectors APIs (aggregated across brokers)
+- [ ] SQLite backup/restore drill
+- [ ] Backend API surface doc
+
+### Q3 2026 (Planned — Phase F)
+- [ ] Frontend rebuild against "The Financial Atelier" design system (`tradedesk-designs/`)
+- [ ] New IA: Portfolio Insights / Analysis Lab / Paper Trading
+- [ ] Mobile-responsive layouts
+
+### Later
+- [ ] Paper trading engine + Strategy SDK
+- [ ] Analysis Lab algorithmic backends (Monte Carlo, Mean Variance, Black-Litterman)
+- [ ] Order placement APIs (live trading)
+- [ ] Prometheus + Grafana metrics
 
 ---
 
