@@ -33,9 +33,15 @@ engine_config = {
     "future": True,  # Use SQLAlchemy 2.0 style
 }
 
-# Configure connection pooling based on environment
-if settings.is_production:
-    # Production: Use connection pooling
+# Configure connection pooling based on the actual database dialect, not APP_ENV.
+# SQLite always uses NullPool (pool_size / max_overflow / pool_timeout are not
+# accepted by NullPool and would raise TypeError). Only real pooled databases
+# like PostgreSQL benefit from the tuning args.
+if settings.DATABASE_URL.startswith("sqlite"):
+    # SQLite (any environment): use NullPool. Each session gets its own connection.
+    engine_config.update({"poolclass": NullPool})
+elif settings.is_production:
+    # Production with a pooled database (Postgres/Timescale): tune the pool.
     engine_config.update(
         {
             "pool_size": settings.DATABASE_POOL_SIZE,
@@ -45,7 +51,7 @@ if settings.is_production:
         }
     )
 else:
-    # Development/Testing: Use NullPool to avoid connection issues
+    # Development/testing with a pooled database: NullPool to avoid connection issues
     engine_config.update({"poolclass": NullPool})
 
 # Create async engine with configured settings

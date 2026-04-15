@@ -11,12 +11,13 @@
 # The `-` prefix on ExecStartPre tells systemd to ignore the exit code if nothing
 # is currently configured (first-boot case).
 #
-# NOTE ON PATH BEHAVIOR: `tailscale serve --set-path=/api` mounts /api on the tailnet.
-# Per Tailscale's docs ("Our mount points behave similarly to Go ServeMux"), the full
-# original path should be forwarded to the backend, so a request to /api/v1/foo
-# reaches the backend as /api/v1/foo (which matches FastAPI's api_router prefix).
-# If verification shows the /api prefix being stripped, change the target URL from
-# "http://localhost:8000" to "http://localhost:8000/api" to re-add it.
+# NOTE ON PATH BEHAVIOR: tailscale serve DOES strip the mount prefix before
+# forwarding. Verified 2026-04-15 on this deployment:
+#   - https://.../api/v1/health   → arrives at backend as /v1/health      (strip confirmed)
+#   - https://.../api/health      → arrives at backend as /health         (200 OK)
+# Fix: the backend target includes `/api` so tailscale serve re-adds the prefix
+# when forwarding. Net effect: /api/v1/foo on the tailnet reaches the backend
+# at /api/v1/foo, matching FastAPI's api_router prefix.
 #
 # Verification after enable:
 #   tailscale serve status
@@ -35,7 +36,7 @@ Wants=trade-desk.service
 Type=oneshot
 RemainAfterExit=yes
 ExecStartPre=-/usr/bin/tailscale serve --https=443 off
-ExecStart=/usr/bin/tailscale serve --bg --https=443 --set-path=/api http://localhost:8000
+ExecStart=/usr/bin/tailscale serve --bg --https=443 --set-path=/api http://localhost:8000/api
 ExecStart=/usr/bin/tailscale serve --bg --https=443 http://localhost:3001
 ExecStop=-/usr/bin/tailscale serve --https=443 off
 StandardOutput=journal

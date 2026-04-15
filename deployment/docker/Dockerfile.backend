@@ -7,7 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies
+# Install system dependencies (compile toolchain for Python native extensions)
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
@@ -25,6 +25,15 @@ WORKDIR /app
 COPY backend/requirements.txt .
 RUN pip install --upgrade pip && \
     pip install -r requirements.txt
+
+# Install runtime-only CLIs AFTER the expensive pip-install layer so that
+# modifying this line doesn't invalidate the pip cache (numpy/pandas/cryptography
+# native compiles on arm64 take ~10 min on a Pi 4).
+# sqlite3 is used by the Stage 5 backup script (`sqlite3 ... .backup ...`) and
+# for ad-hoc WAL/pragma verification.
+RUN apt-get update && apt-get install -y \
+    sqlite3 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy application code
 COPY backend/ .

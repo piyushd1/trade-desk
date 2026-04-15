@@ -36,9 +36,20 @@ step()  { echo -e "\n${BLUE}==>${NC} $*"; }
 ### Resolve paths ###
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_PATH="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-CURRENT_USER="$(id -un)"
-CURRENT_GROUP="$(id -gn)"
-CURRENT_HOME="${HOME}"
+
+# When run via `sudo bash setup-pi.sh`, `id -un` returns "root" and $HOME is
+# /root — neither is what we want. Use SUDO_USER to recover the real invoking
+# user, and look up their group + home via getent so the substituted templates
+# reference /home/<real-user>, not /root.
+REAL_USER="${SUDO_USER:-$(id -un)}"
+CURRENT_USER="${REAL_USER}"
+CURRENT_GROUP="$(id -gn "${REAL_USER}")"
+CURRENT_HOME="$(getent passwd "${REAL_USER}" | cut -d: -f6)"
+
+if [[ -z "${CURRENT_HOME}" ]]; then
+    err "Could not resolve home directory for user '${REAL_USER}'"
+    exit 1
+fi
 COMPOSE_FILE="${REPO_PATH}/deployment/docker/docker-compose.prod.yml"
 SYSTEMD_DIR="/etc/systemd/system"
 TEMPLATE_DIR="${REPO_PATH}/deployment/systemd"

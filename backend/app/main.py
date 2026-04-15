@@ -268,9 +268,19 @@ app.add_middleware(
 )
 
 # Trusted host middleware (security)
+# Loopback hosts (localhost, 127.0.0.1) are always allowed so that:
+#   - the container's own healthcheck (curl http://localhost:8000/health) can pass
+#   - smoke tests from the Pi host can hit 127.0.0.1:8000 directly
+# These are namespace-isolated / loopback-only and not reachable from outside the Pi.
 if settings.is_production and settings.APP_DOMAIN:
     app.add_middleware(
-        TrustedHostMiddleware, allowed_hosts=[settings.APP_DOMAIN, f"*.{settings.APP_DOMAIN}"]
+        TrustedHostMiddleware,
+        allowed_hosts=[
+            settings.APP_DOMAIN,
+            f"*.{settings.APP_DOMAIN}",
+            "localhost",
+            "127.0.0.1",
+        ],
     )
 
 # GZip compression for responses
