@@ -1,0 +1,32 @@
+# TradeDesk Alembic migration oneshot
+#
+# Runs `alembic upgrade head` inside a disposable backend container.
+# Oneshot semantics: runs to completion, then stays "active" (via RemainAfterExit=yes).
+# trade-desk.service (the main stack) Requires= this, so migrations always complete
+# before the app starts on boot.
+#
+# To re-run migrations manually:  sudo systemctl restart trade-desk-migrate.service
+#
+# Installed by deployment/scripts/setup-pi.sh which substitutes {{USER}} / {{REPO_PATH}}.
+
+[Unit]
+Description=TradeDesk Alembic migrations (oneshot)
+Documentation=https://github.com/piyushd1/trade-desk
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User={{USER}}
+Group={{GROUP}}
+WorkingDirectory={{REPO_PATH}}
+ExecStart=/usr/bin/docker compose -f deployment/docker/docker-compose.prod.yml run --rm backend alembic upgrade head
+RemainAfterExit=yes
+TimeoutStartSec=600
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=trade-desk-migrate
+
+[Install]
+WantedBy=multi-user.target

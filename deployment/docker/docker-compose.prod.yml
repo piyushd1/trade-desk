@@ -1,0 +1,101 @@
+# TradeDesk — Pi production Docker Compose
+#
+# Differences from docker-compose.yml (dev):
+#   - No nginx / redis / caddy services (tailscale serve on host handles TLS + routing)
+#   - Only backend + frontend
+#   - linux/arm64 platform pinned for Pi
+#   - Named volume for SQLite so data survives rebuilds
+#   - Memory limits sized for a 4GB Pi with Tailscale + Docker overhead
+#   - Log rotation capped at 10MB x 3 files per container
+#   - Ports bound to 127.0.0.1 only (tailscale serve reaches them on loopback)
+#
+# Usage on Pi:
+#   cd ~/trade-desk
+#   docker compose -f deployment/docker/docker-compose.prod.yml build
+#   docker compose -f deployment/docker/docker-compose.prod.yml up -d
+#
+# Or via systemd (preferred, see deployment/systemd/trade-desk.service.template):
+#   sudo systemctl start trade-desk.service
+
+services:
+  backend:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile.backend
+    image: tradedesk-backend:prod
+    container_name: trade-desk-backend
+    restart: unless-stopped
+    platform: linux/arm64
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - ../../backend/.env
+    environment:
+      # Override DATABASE_URL so SQLite file lives in the named volume, not the container FS.
+      # This is critical: container rebuilds (e.g., git pull + docker compose up --build)
+      # discard the container filesystem but the volume persists.
+      - DATABASE_URL=sqlite+aiosqlite:////app/data/tradedesk.db
+      - APP_ENV=production
+    volumes:
+      - tradedesk-data:/app/data
+      - tradedesk-logs:/app/logs
+    mem_limit: 1000m
+    mem_reservation: 400m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+
+  frontend:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile.frontend
+    image: tradedesk-frontend:prod
+    container_name: trade-desk-frontend
+    restart: unless-stopped
+    platform: linux/arm64
+    ports:
+      - "127.0.0.1:3001:3001"
+    env_file:
+      - ../../frontend/.env.production
+    environment:
+      # NEXT_PUBLIC_* values are baked in at build time; this just confirms the expected value.
+      # Real API routing happens via tailscale serve on the host: /api/* -> backend, /* -> frontend.
+      - NEXT_PUBLIC_API_URL=/api/v1
+    depends_on:
+      backend:
+        condition: service_healthy
+    mem_limit: 600m
+    mem_reservation: 200m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://localhost:3001/', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+
+volumes:
+  tradedesk-data:
+    name: tradedesk-data
+  tradedesk-logs:
+    name: tradedesk-logs
+
+networks:
+  default:
+    name: trade-desk-prod-network

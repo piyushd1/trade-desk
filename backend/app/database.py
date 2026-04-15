@@ -15,7 +15,7 @@ import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from sqlalchemy import text
+from sqlalchemy import event, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
@@ -50,6 +50,26 @@ else:
 
 # Create async engine with configured settings
 engine = create_async_engine(settings.DATABASE_URL, **engine_config)
+
+
+# SQLite hardening: apply pragmas on every new connection.
+# - journal_mode=WAL: readers don't block writers, writers don't block readers
+# - busy_timeout=5000: wait up to 5s on lock contention instead of failing immediately
+# - synchronous=NORMAL: safe with WAL; big write-throughput win vs FULL
+# - foreign_keys=ON: SQLite disables FK enforcement by default, we want it on
+# These pragmas are per-connection (except journal_mode, which persists in the
+# file header but is also cheap to re-assert). They're no-ops for PostgreSQL.
+if settings.DATABASE_URL.startswith("sqlite"):
+
+    @event.listens_for(engine.sync_engine, "connect")
+    def _set_sqlite_pragmas(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA busy_timeout=5000")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+
 
 # Create async session factory
 AsyncSessionLocal = async_sessionmaker(

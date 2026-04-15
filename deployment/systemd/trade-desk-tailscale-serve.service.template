@@ -1,0 +1,46 @@
+# TradeDesk Tailscale serve — TLS + path routing on the tailnet hostname
+#
+# Exposes the stack on https://<tailnet-hostname>/ with valid Let's Encrypt TLS
+# issued by Tailscale. Prerequisite: HTTPS must be enabled in the Tailscale admin
+# console: https://login.tailscale.com/admin/dns → "HTTPS Certificates" → Enable.
+#
+# Routing (per https://tailscale.com/docs/reference/tailscale-cli/serve):
+#   /api/*  → http://localhost:8000  (backend FastAPI, which already has /api/v1 prefix)
+#   /       → http://localhost:3001  (frontend Next.js)
+#
+# The `-` prefix on ExecStartPre tells systemd to ignore the exit code if nothing
+# is currently configured (first-boot case).
+#
+# NOTE ON PATH BEHAVIOR: `tailscale serve --set-path=/api` mounts /api on the tailnet.
+# Per Tailscale's docs ("Our mount points behave similarly to Go ServeMux"), the full
+# original path should be forwarded to the backend, so a request to /api/v1/foo
+# reaches the backend as /api/v1/foo (which matches FastAPI's api_router prefix).
+# If verification shows the /api prefix being stripped, change the target URL from
+# "http://localhost:8000" to "http://localhost:8000/api" to re-add it.
+#
+# Verification after enable:
+#   tailscale serve status
+#   TS_HOST=$(tailscale status --json | jq -r '.Self.DNSName|rtrimstr(".")')
+#   curl -f "https://${TS_HOST}/api/v1/health"  # from another tailnet device
+#   curl -f "https://${TS_HOST}/"               # frontend UI
+
+[Unit]
+Description=TradeDesk Tailscale serve (reverse proxy + TLS)
+Documentation=https://tailscale.com/kb/1242/tailscale-serve
+After=tailscaled.service trade-desk.service
+Requires=tailscaled.service
+Wants=trade-desk.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=-/usr/bin/tailscale serve --https=443 off
+ExecStart=/usr/bin/tailscale serve --bg --https=443 --set-path=/api http://localhost:8000
+ExecStart=/usr/bin/tailscale serve --bg --https=443 http://localhost:3001
+ExecStop=-/usr/bin/tailscale serve --https=443 off
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=trade-desk-serve
+
+[Install]
+WantedBy=multi-user.target

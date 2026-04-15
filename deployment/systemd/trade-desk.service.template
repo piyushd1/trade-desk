@@ -1,0 +1,31 @@
+# TradeDesk main stack — backend + frontend via Docker Compose
+#
+# Requires= trade-desk-migrate.service: migrations MUST complete successfully
+# before the app starts. On reboot, systemd enforces the order:
+#   docker.service → trade-desk-migrate.service → trade-desk.service
+#
+# Installed by deployment/scripts/setup-pi.sh which substitutes {{USER}} / {{GROUP}} / {{REPO_PATH}}.
+
+[Unit]
+Description=TradeDesk Docker stack (backend + frontend)
+Documentation=https://github.com/piyushd1/trade-desk
+After=docker.service trade-desk-migrate.service network-online.target
+Requires=docker.service trade-desk-migrate.service
+Wants=network-online.target
+
+[Service]
+Type=exec
+User={{USER}}
+Group={{GROUP}}
+WorkingDirectory={{REPO_PATH}}
+ExecStart=/usr/bin/docker compose -f deployment/docker/docker-compose.prod.yml up
+ExecStop=/usr/bin/docker compose -f deployment/docker/docker-compose.prod.yml down
+Restart=on-failure
+RestartSec=10s
+TimeoutStopSec=90
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=trade-desk
+
+[Install]
+WantedBy=multi-user.target
