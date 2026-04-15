@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
 
 function CallbackContent() {
   const router = useRouter();
@@ -15,42 +16,67 @@ function CallbackContent() {
 
   useEffect(() => {
     const handleCallback = async () => {
-      // Get OAuth parameters from URL
-      const requestToken = searchParams.get("request_token");
+      // The backend /api/v1/auth/zerodha/callback handler already exchanged the
+      // Kite request_token for an access_token and stored a broker_session row
+      // with user_id = NULL, then 302-redirected us here. All we have to do is:
+      //   1. Read status + state from the query string
+      //   2. Call /api/v1/auth/zerodha/session/claim with the user's JWT so the
+      //      session gets linked to the authenticated user (without this, every
+      //      portfolio endpoint will 403 because ownership validation fails).
+      //   3. Save user_identifier to localStorage so downstream React Query
+      //      hooks know which session to look up.
       const callbackStatus = searchParams.get("status");
       const state = searchParams.get("state");
+      const errorMessage = searchParams.get("message");
 
-      if (callbackStatus !== "success" || !requestToken) {
+      if (callbackStatus === "error") {
         setStatus("error");
-        setMessage("OAuth authorization failed or was cancelled");
+        setMessage(errorMessage || "OAuth authorization failed or was cancelled");
+        return;
+      }
+
+      if (callbackStatus !== "success" || !state) {
+        setStatus("error");
+        setMessage("Missing required callback parameters");
         return;
       }
 
       try {
-        // The backend callback endpoint will handle the token exchange
-        // We just need to verify the session was created
-        setMessage("Authenticating with Zerodha...");
-        
-        // Wait a moment for backend to process
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        setMessage("Linking Zerodha session to your account...");
 
-        // Save user identifier
-        if (state) {
-          localStorage.setItem("user_identifier", state);
+        // The /auth/callback route isn't wrapped by the AuthProvider, so the
+        // axios `api` instance doesn't have the Authorization header set yet.
+        // Read the stored access token directly and attach it per-request.
+        const accessToken = localStorage.getItem("access_token");
+        if (!accessToken) {
+          throw new Error("You must be logged in to link a Zerodha session. Please log in and try again.");
         }
+
+        await api.post(
+          `/auth/zerodha/session/claim?user_identifier=${encodeURIComponent(state)}`,
+          null,
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+
+        // Save user identifier so portfolio/margins/holdings queries can find the session
+        localStorage.setItem("user_identifier", state);
 
         setStatus("success");
         setMessage("Successfully connected to Zerodha!");
-        setUserData({ state, request_token: requestToken });
+        setUserData({ state });
 
         // Redirect to dashboard after 2 seconds
         setTimeout(() => {
           router.push("/dashboard");
         }, 2000);
-      } catch (error) {
+      } catch (error: any) {
         setStatus("error");
-        setMessage("Failed to complete authentication");
-        console.error("Auth error:", error);
+        const detail =
+          error?.response?.data?.detail ||
+          error?.message ||
+          "Failed to complete authentication";
+        setMessage(detail);
+        console.error("Zerodha callback error:", error);
       }
     };
 

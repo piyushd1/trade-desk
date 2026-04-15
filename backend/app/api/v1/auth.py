@@ -3,6 +3,8 @@ Authentication Endpoints
 User authentication, OAuth, and JWT token management
 """
 
+from urllib.parse import quote_plus
+
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import RedirectResponse
@@ -699,6 +701,13 @@ async def zerodha_oauth_callback(
         dict: Session data with access_token
     """
     
+    # This endpoint is hit via Zerodha's browser redirect. Rather than returning
+    # JSON (which dumps raw text into the user's browser), we perform the token
+    # exchange and then 302 to the frontend /auth/callback page so the user sees
+    # a real UI. The frontend page is responsible for calling the session/claim
+    # endpoint with the user's JWT to link the new broker_session to the
+    # authenticated TradeDesk user.
+
     # Check if authorization was successful
     if status != "success" or not request_token:
         # Log failed OAuth attempt
@@ -717,30 +726,24 @@ async def zerodha_oauth_callback(
             user_agent=request.headers.get("user-agent"),
             db=db
         )
-        
-        return {
-            "status": "error",
-            "message": "Authorization failed or was denied",
-            "details": {
-                "status": status,
-                "action": action,
-                "request_token_received": request_token is not None
-            }
-        }
-    
+
+        return RedirectResponse(
+            url=f"/auth/callback?status=error&message={quote_plus('Authorization failed or was denied')}",
+            status_code=302,
+        )
+
     # Exchange request_token for access_token
     session_data = zerodha_service.generate_session(request_token)
- 
+
     if session_data["status"] == "success":
         user_identifier = state or session_data.get("user_id") or "default"
         broker_session = await _store_broker_session(
             db=db,
             user_identifier=user_identifier,
-            user_id=None,  # Set to None - user will claim session after login
+            user_id=None,  # Set to None - frontend will call /zerodha/session/claim after redirect
             broker="zerodha",
             session_data=session_data,
         )
-        access_token = session_data["access_token"]
         refresh_token = session_data.get("refresh_token")
 
         # Log successful OAuth
@@ -760,21 +763,11 @@ async def zerodha_oauth_callback(
             user_agent=request.headers.get("user-agent"),
             db=db
         )
-        return {
-            "status": "success",
-            "message": "Zerodha session stored successfully",
-            "user_identifier": user_identifier,
-            "session": {
-                "broker": broker_session.broker,
-                "expires_at": broker_session.expires_at.isoformat() if broker_session.expires_at else None,
-                "has_refresh_token": refresh_token is not None,
-                "meta": broker_session.meta,
-            },
-            "next_steps": [
-                f"Call /api/v1/auth/zerodha/session?user_identifier={user_identifier} to view the stored session",
-                f"Use user_identifier={user_identifier} with /api/v1/data/zerodha/* endpoints to fetch data",
-            ],
-        }
+
+        return RedirectResponse(
+            url=f"/auth/callback?status=success&state={quote_plus(user_identifier)}",
+            status_code=302,
+        )
     else:
         # Log OAuth error
         await audit_service.log_event(
@@ -791,14 +784,10 @@ async def zerodha_oauth_callback(
             db=db
         )
         error_msg = session_data.get("message", "Unknown error")
-        return {
-            "status": "error",
-            "message": error_msg,
-            "details": {
-                "user_identifier": state,
-                "broker": "zerodha",
-            },
-        }
+        return RedirectResponse(
+            url=f"/auth/callback?status=error&message={quote_plus(error_msg)}",
+            status_code=302,
+        )
 
 
 @router.post("/brokers/groww/connect")

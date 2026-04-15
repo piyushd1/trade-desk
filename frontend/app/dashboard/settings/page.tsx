@@ -34,9 +34,16 @@ export default function SettingsPage() {
     },
   });
 
-  const canAuthenticate = useMemo(() => {
+  // True when the *form* has both API key and secret typed in — used to gate
+  // the "save new credentials" path. Independent of whether backend already
+  // has credentials loaded from .env.
+  const formHasNewCredentials = useMemo(() => {
     return apiKeyInput.trim().length > 0 && apiSecretInput.trim().length > 0;
   }, [apiKeyInput, apiSecretInput]);
+
+  // True when the user can initiate OAuth at all — either they typed new
+  // credentials, OR the backend is already configured from environment.
+  const canConnect = formHasNewCredentials || credentialsConfigured;
 
   useEffect(() => {
     if (!redirectUrlInput && brokerStatus?.zerodha?.redirect_url) {
@@ -57,26 +64,45 @@ export default function SettingsPage() {
   }, [userIdentifier]);
 
   const handleAuthenticate = useCallback(async () => {
-    if (!canAuthenticate) {
-      toast.error("Enter both API key and secret to continue");
+    // If the form has new credentials typed in, save them first (this overrides
+    // whatever was loaded from .env at container startup — useful when the user
+    // rotates keys without touching the server). If the form is empty AND the
+    // backend is already configured from environment, skip the save step and
+    // go straight to OAuth.
+    if (formHasNewCredentials) {
+      const apiKey = apiKeyInput.trim();
+      const apiSecret = apiSecretInput.trim();
+      const redirectUrl = redirectUrlInput.trim() || undefined;
+      try {
+        await updateCredentials.mutateAsync({ apiKey, apiSecret, redirectUrl });
+        setApiKeyInput("");
+        setApiSecretInput("");
+      } catch (error) {
+        console.error("Failed to save Zerodha credentials:", error);
+        return; // mutation.onError surfaced a toast already
+      }
+    } else if (!credentialsConfigured) {
+      toast.error("Enter API key and secret to continue");
       return;
     }
 
-    const apiKey = apiKeyInput.trim();
-    const apiSecret = apiSecretInput.trim();
-    const redirectUrl = redirectUrlInput.trim() || undefined;
-
     try {
-      await updateCredentials.mutateAsync({ apiKey, apiSecret, redirectUrl });
-      setApiKeyInput("");
-      setApiSecretInput("");
       const state = generateState();
       await login(state);
     } catch (error) {
-      // Errors are surfaced via mutation onError handler
-      console.error("Failed to authenticate Zerodha:", error);
+      console.error("Failed to initiate Zerodha login:", error);
+      toast.error("Failed to initiate Zerodha login");
     }
-  }, [apiKeyInput, apiSecretInput, redirectUrlInput, canAuthenticate, updateCredentials, generateState, login]);
+  }, [
+    apiKeyInput,
+    apiSecretInput,
+    redirectUrlInput,
+    formHasNewCredentials,
+    credentialsConfigured,
+    updateCredentials,
+    generateState,
+    login,
+  ]);
 
   const handleRefreshToken = () => {
     refreshToken();
@@ -148,13 +174,22 @@ export default function SettingsPage() {
               type="button"
               className="w-full"
               onClick={handleAuthenticate}
-              disabled={!canAuthenticate || updateCredentials.isPending}
+              disabled={!canConnect || updateCredentials.isPending}
             >
               {updateCredentials.isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : null}
-              {credentialsConfigured ? "Re-authenticate Zerodha" : "Authenticate Zerodha"}
+              {formHasNewCredentials
+                ? "Save & Connect to Zerodha"
+                : credentialsConfigured
+                  ? "Connect to Zerodha"
+                  : "Enter credentials to connect"}
             </Button>
+            {credentialsConfigured && !formHasNewCredentials && (
+              <p className="text-xs text-muted-foreground text-center">
+                Using credentials from server configuration. Fill the fields above only to override.
+              </p>
+            )}
           </div>
 
           {session && (
