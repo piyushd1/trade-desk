@@ -153,6 +153,22 @@ class Settings(BaseSettings):
         default=None, description="Default Zerodha user identifier (e.g., YOUR_USER_IDENTIFIER). Can be overridden per request. Set in .env file."
     )
 
+    # ===== IndStocks (IndMoney) Broker Integration =====
+    # IndStocks uses a static access token pasted from web.indstocks.com rather
+    # than OAuth. The token expires every 24 hours and has no programmatic
+    # refresh, so the user must paste a fresh token daily. See
+    # backend/app/brokers/indstocks.py for the full adapter docstring.
+    INDSTOCKS_ACCESS_TOKEN: str | None = Field(
+        default=None,
+        description="IndStocks static bearer token from web.indstocks.com. "
+                    "Expires every 24 hours. Paste fresh token daily. "
+                    "Do NOT include a 'Bearer ' prefix — IndStocks uses the raw token.",
+    )
+    INDSTOCKS_USER_IDENTIFIER: str | None = Field(
+        default=None,
+        description="Default IndStocks user identifier for routing broker_sessions rows.",
+    )
+
     # ===== Groww Broker Integration =====
     GROWW_API_KEY: str | None = Field(default=None, description="Groww API key")
     GROWW_API_SECRET: str | None = Field(default=None, description="Groww API secret")

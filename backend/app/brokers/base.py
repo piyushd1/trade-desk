@@ -13,6 +13,7 @@ from datetime import datetime
 class BrokerType(str, Enum):
     """Supported broker types"""
     ZERODHA = "zerodha"
+    INDSTOCKS = "indstocks"
     GROWW = "groww"
 
 
