@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed": "#003894",
+                    "on-secondary-fixed": "#3f3f43",
+                    "inverse-on-surface": "#9b9d9e",
+                    "secondary-fixed": "#e4e2e6",
+                    "surface": "#f8f9fa",
+                    "on-primary-fixed-variant": "#0052d0",
+                    "error-dim": "#4e0309",
+                    "tertiary-container": "#e1d8fa",
+                    "surface-container-low": "#f1f4f6",
+                    "surface-bright": "#f8f9fa",
+                    "on-primary-container": "#0049bb",
+                    "primary-fixed": "#dae1ff",
+                    "secondary": "#5f5f62",
+                    "primary-container": "#dae1ff",
+                    "outline-variant": "#abb3b7",
+                    "on-primary": "#f8f7ff",
+                    "primary-dim": "#004abd",
+                    "tertiary": "#615b77",
+                    "surface-container": "#eaeff1",
+                    "on-surface-variant": "#586064",
+                    "on-tertiary-container": "#504b66",
+                    "background": "#f8f9fa",
+                    "on-background": "#2b3437",
+                    "on-tertiary-fixed": "#3d3852",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed-dim": "#d3caeb",
+                    "on-tertiary": "#fcf7ff",
+                    "surface-dim": "#d1dce0",
+                    "tertiary-dim": "#554f6b",
+                    "on-secondary-container": "#515155",
+                    "primary": "#0054d6",
+                    "error-container": "#fe8983",
+                    "secondary-fixed-dim": "#d5d4d8",
+                    "on-error": "#fff7f6",
+                    "secondary-container": "#e4e2e6",
+                    "secondary-dim": "#535356",
+                    "surface-container-highest": "#dbe4e7",
+                    "on-secondary-fixed-variant": "#5b5b5f",
+                    "surface-container-high": "#e3e9ec",
+                    "primary-fixed-dim": "#c7d3ff",
+                    "on-error-container": "#752121",
+                    "inverse-primary": "#5e8bff",
+                    "error": "#9f403d",
+                    "surface-variant": "#dbe4e7",
+                    "inverse-surface": "#0c0f10",
+                    "outline": "#737c7f",
+                    "tertiary-fixed": "#e1d8fa",
+                    "on-surface": "#2b3437",
+                    "on-secondary": "#faf8fc",
+                    "surface-tint": "#0054d6",
+                    "on-tertiary-fixed-variant": "#5a5470"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
+        .font-headline { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-background">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-slate-50/80 backdrop-blur-xl flex justify-between items-center px-6 py-4">
+<div class="flex items-center gap-3">
+<span class="text-xl font-bold tracking-tighter text-slate-900 font-headline">The Financial Atelier</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-slate-500 hover:text-blue-500 transition-colors" data-icon="notifications">notifications</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant/15">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="close-up portrait of a professional woman with a soft neutral background and clean cinematic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9ECmNf9_ld6yB_ROuRc3VD2f4g2GgoYwNSDVpSikEACn6zYegOJji-4o6Y_2nEsT8WknQnS8J2nxZwHOkhY0aPl9bnXozFpcxSvvx0Wemx92pG_bkKLtyFu-jreVJVMSREOPdb5edem-LvPJs0odWlw9OscD2pn7RKmUNXPGQNR2U9vz-m2rXTmvRYUR-Qg_xxawvVuzg1hJVIQXXQD6EGuUWlximwbkLJyuMpuw80KdjHHnUiJ6r1Ft0mj57VnubjzqlD0CrvtbX"/>
+</div>
+</div>
+</nav>
+<!-- Main Canvas -->
+<main class="pt-24 pb-32 px-6 max-w-md mx-auto">
+<!-- Hero Section: Portfolio Balance -->
+<header class="mb-10">
+<p class="text-on-surface-variant font-label text-sm uppercase tracking-widest mb-1">Total Net Worth</p>
+<div class="flex justify-between items-end">
+<h1 class="text-4xl font-extrabold font-headline tracking-tight text-on-surface">$1,248,590.42</h1>
+<div class="bg-primary-container px-3 py-1 rounded-full mb-1">
+<span class="text-on-primary-container font-semibold text-xs">+12.4%</span>
+</div>
+</div>
+</header>
+<!-- Bento Grid: Insights & Metrics -->
+<section class="grid grid-cols-2 gap-4 mb-10">
+<!-- Risk Metric Card -->
+<div class="col-span-1 bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+<span class="material-symbols-outlined text-primary mb-3" data-icon="shield_with_heart">shield_with_heart</span>
+<p class="text-on-surface-variant text-xs font-medium mb-1">Risk Profile</p>
+<p class="text-on-surface font-headline font-bold text-lg">Moderate</p>
+</div>
+<!-- Alpha Metric Card -->
+<div class="col-span-1 bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+<span class="material-symbols-outlined text-tertiary mb-3" data-icon="show_chart">show_chart</span>
+<p class="text-on-surface-variant text-xs font-medium mb-1">Annual Alpha</p>
+<p class="text-on-surface font-headline font-bold text-lg">+4.2%</p>
+</div>
+<!-- Allocation Chart Minimalist -->
+<div class="col-span-2 bg-surface-container-low p-6 rounded-xl relative overflow-hidden">
+<div class="relative z-10">
+<p class="text-on-surface font-headline font-bold mb-4">Asset Allocation</p>
+<div class="flex h-3 w-full rounded-full overflow-hidden bg-surface-container-highest mb-4">
+<div class="h-full bg-primary" style="width: 65%"></div>
+<div class="h-full bg-tertiary-dim" style="width: 20%"></div>
+<div class="h-full bg-outline-variant" style="width: 15%"></div>
+</div>
+<div class="flex justify-between text-[10px] uppercase font-bold tracking-wider text-on-surface-variant">
+<div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-primary"></span> Equities</div>
+<div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-tertiary-dim"></span> Bonds</div>
+<div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-outline-variant"></span> Alternatives</div>
+</div>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-5 pointer-events-none">
+<span class="material-symbols-outlined text-9xl" data-icon="pie_chart">pie_chart</span>
+</div>
+</div>
+</section>
+<!-- Dynamic Holdings List -->
+<section>
+<div class="flex justify-between items-center mb-6">
+<h2 class="text-xl font-bold font-headline text-on-surface">Top Holdings</h2>
+<button class="text-primary text-sm font-semibold">View All</button>
+</div>
+<div class="space-y-4">
+<!-- Holding Card 1 -->
+<div class="bg-surface-container-lowest p-4 rounded-xl flex items-center justify-between border border-outline-variant/5">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center font-bold text-primary">
+                            NV
+                        </div>
+<div>
+<p class="text-on-surface font-bold">NVIDIA Corp</p>
+<p class="text-on-surface-variant text-xs">840.5 Shares</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-on-surface font-headline font-bold">$112,450</p>
+<p class="text-emerald-600 text-xs font-medium">+2.5%</p>
+</div>
+</div>
+<!-- Holding Card 2 -->
+<div class="bg-surface-container-lowest p-4 rounded-xl flex items-center justify-between border border-outline-variant/5">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center font-bold text-on-tertiary-container">
+                            MS
+                        </div>
+<div>
+<p class="text-on-surface font-bold">Microsoft</p>
+<p class="text-on-surface-variant text-xs">210.2 Shares</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-on-surface font-headline font-bold">$84,320</p>
+<p class="text-emerald-600 text-xs font-medium">+0.8%</p>
+</div>
+</div>
+<!-- Holding Card 3 -->
+<div class="bg-surface-container-lowest p-4 rounded-xl flex items-center justify-between border border-outline-variant/5">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center font-bold text-secondary">
+                            AP
+                        </div>
+<div>
+<p class="text-on-surface font-bold">Apple Inc</p>
+<p class="text-on-surface-variant text-xs">450.0 Shares</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-on-surface font-headline font-bold">$78,125</p>
+<p class="text-rose-600 text-xs font-medium">-1.2%</p>
+</div>
+</div>
+<!-- Insight Alert Card -->
+<div class="bg-primary-container/40 p-5 rounded-xl border border-primary/10 mt-6">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary-dim" data-icon="lightbulb">lightbulb</span>
+<div>
+<p class="text-on-primary-container font-bold text-sm mb-1">Portfolio Insight</p>
+<p class="text-on-primary-container/80 text-xs leading-relaxed">Your tech concentration is 12% higher than your target. Consider rebalancing into alternatives to maintain your moderate risk profile.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- SideNavBar (Used as Bottom Nav for Mobile - Destination Rule) -->
+<nav class="fixed bottom-0 w-full z-50 bg-slate-50/90 backdrop-blur-xl border-t border-slate-200/15 flex justify-around items-center py-4 px-2 md:hidden">
+<!-- Mapping Portfolio Tab as Active -->
+<button class="flex flex-col items-center gap-1 group text-blue-600 font-semibold transition-all">
+<span class="material-symbols-outlined text-2xl" data-icon="pie_chart" style="font-variation-settings: 'FILL' 1;">pie_chart</span>
+<span class="text-[10px] font-medium">Portfolio</span>
+</button>
+<button class="flex flex-col items-center gap-1 group text-slate-500 hover:bg-slate-100 transition-all">
+<span class="material-symbols-outlined text-2xl" data-icon="science">science</span>
+<span class="text-[10px] font-medium">Analysis Lab</span>
+</button>
+<button class="flex flex-col items-center gap-1 group text-slate-500 hover:bg-slate-100 transition-all">
+<span class="material-symbols-outlined text-2xl" data-icon="biotech">biotech</span>
+<span class="text-[10px] font-medium">Paper Trading</span>
+</button>
+</nav>
+<!-- Contextual FAB (Supressed on Details/Transactional, but active on Home/Dashboard) -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-gradient-to-br from-primary to-primary-dim text-on-primary rounded-full shadow-lg flex items-center justify-center z-40 transition-transform active:scale-95">
+<span class="material-symbols-outlined text-3xl" data-icon="add">add</span>
+</button>
+</body></html>
