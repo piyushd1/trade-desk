@@ -13,6 +13,7 @@ from app.models.broker_session import BrokerSession
 from app.models.risk_config import RiskConfig, DailyRiskMetrics
 from app.models.market_data import Instrument, HistoricalCandle
 from app.models.fundamentals import SymbolMapping, StockFundamentals, StockAnalystData
+from app.models.portfolio_snapshot import PortfolioSnapshot
 
 __all__ = [
     "User",
@@ -33,5 +34,5 @@ __all__ = [
     "SymbolMapping",
     "StockFundamentals",
     "StockAnalystData",
+    "PortfolioSnapshot",
 ]
-

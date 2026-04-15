@@ -32,6 +32,7 @@ from app.config import settings
 from app.database import check_db_connection, close_db, init_db
 from app.services.audit_service import audit_service
 from app.services.token_refresh_service import token_refresh_service
+from app.services.snapshot_scheduler import snapshot_scheduler
 from app.services.zerodha_streaming_service import zerodha_streaming_manager
 
 # Configure structured logging
@@ -159,6 +160,14 @@ async def lifespan(app: FastAPI):
         else:
             logger.info("ℹ️  Token auto-refresh is disabled")
 
+        # Start portfolio snapshot scheduler (Phase B4). Cron runs every
+        # 15 min Mon-Fri IST, captures a per-broker snapshot for every
+        # active broker session. See backend/app/services/snapshot_scheduler.py.
+        try:
+            await snapshot_scheduler.start()
+        except Exception as e:
+            logger.warning(f"⚠️  Portfolio snapshot scheduler failed to start: {e}")
+
         # Log successful startup
         startup_time = time.time() - startup_start
         logger.info(f"✅ Application startup complete in {startup_time:.2f}s")
@@ -205,6 +214,12 @@ async def lifespan(app: FastAPI):
         if settings.ZERODHA_AUTO_REFRESH_ENABLED:
             token_refresh_service.stop()
             logger.info("✅ Token refresh service stopped")
+
+        # Stop portfolio snapshot scheduler
+        try:
+            await snapshot_scheduler.shutdown()
+        except Exception as e:
+            shutdown_errors.append(f"Snapshot scheduler shutdown failed: {e}")
 
         # Stop any active Zerodha streams
         try:

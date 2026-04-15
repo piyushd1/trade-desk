@@ -1,0 +1,63 @@
+# NSE Holiday Calendar for TradeDesk
+#
+# Source of truth: https://www.nseindia.com/resources/exchange-communication-holidays
+#
+# This file is used by backend/app/utils/market_calendar.py::is_market_open()
+# to decide whether the snapshot scheduler should capture portfolio data for
+# a given date. Weekend handling is done separately by the cron trigger
+# (`*/15 * * * 1-5` — Monday through Friday only) and by an explicit weekday
+# check in the Python loader, so this file only needs to list *weekday*
+# holidays.
+#
+# MAINTAINER NOTE:
+#   This list requires MANUAL UPDATE once a year when NSE publishes the
+#   next year's official holiday calendar (typically in December). The
+#   dates below are a reasonable-confidence draft — gazetted Gregorian
+#   holidays are accurate, but lunar / religious holidays (Holi, Diwali,
+#   Eid, etc.) need to be verified against the NSE notice before a new
+#   year starts because their Gregorian dates shift annually.
+#
+#   When adding a new year, prefer confidence over completeness: a
+#   holiday listed here causes the scheduler to SKIP that day, so a
+#   wrong date just means a wasted fetch. A MISSING holiday is worse —
+#   the scheduler fires, calls the broker API, the broker returns
+#   previous-day data (or an error), and we pollute the history with
+#   bad snapshots.
+#
+# Format:
+#   YYYY:
+#     - YYYY-MM-DD  # Human-readable description (verified | TODO verify)
+#
+# Entries marked with "# TODO verify" are placeholders — the Gregorian
+# date depends on lunar or religious observance and needs confirmation
+# from the NSE notice before relying on it.
+
+2026:
+  # --- Confident (gazetted Gregorian) ---
+  - 2026-01-26  # Republic Day (Mon)                              [verified]
+  - 2026-04-03  # Good Friday                                     [verified]
+  - 2026-04-14  # Dr. B. R. Ambedkar Jayanti (Tue)                [verified]
+  - 2026-05-01  # Maharashtra Day (Fri)                           [verified]
+  - 2026-10-02  # Gandhi Jayanti (Fri)                            [verified]
+  - 2026-12-25  # Christmas (Fri)                                 [verified]
+  # --- Lunar / religious (populate after NSE 2026 notice) ---
+  # - 2026-02-17  # Maha Shivratri                                  TODO verify
+  # - 2026-03-04  # Holi                                            TODO verify
+  # - 2026-03-21  # Eid-ul-Fitr                                     TODO verify
+  # - 2026-05-28  # Bakri Eid                                       TODO verify
+  # - 2026-09-16  # Ganesh Chaturthi                                TODO verify
+  # - 2026-11-11  # Diwali Laxmi Pujan                              TODO verify
+  # - 2026-11-12  # Diwali Balipratipada                            TODO verify
+  # - 2026-11-25  # Guru Nanak Jayanti                              TODO verify
+
+2027:
+  # --- Confident (gazetted Gregorian) ---
+  - 2027-01-26  # Republic Day (Tue)                              [verified]
+  - 2027-05-01  # Maharashtra Day — weekend, skip by default calendar anyway
+  - 2027-08-15  # Independence Day — weekend, skip by default calendar anyway
+  - 2027-10-02  # Gandhi Jayanti — weekend, skip by default calendar anyway
+  - 2027-12-25  # Christmas — weekend, skip by default calendar anyway
+  # --- TODO once NSE publishes 2027 notice ---
+  # - 2027-03-26  # Good Friday                                    TODO verify
+  # - 2027-04-14  # Dr. B. R. Ambedkar Jayanti                     TODO verify
+  # - ... plus lunar / religious holidays per the NSE annual list

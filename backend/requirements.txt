@@ -42,6 +42,11 @@ hiredis==3.0.0
 celery==5.4.0
 flower==2.0.1  # Celery monitoring
 
+# In-process scheduler (portfolio_snapshots 15-min cron — see
+# backend/app/services/snapshot_scheduler.py). Pure-Python, no native
+# compiles, safe on arm64.
+apscheduler==3.10.4
+
 # Utilities
 python-dotenv==1.0.1
 orjson==3.10.11  # Fast JSON
