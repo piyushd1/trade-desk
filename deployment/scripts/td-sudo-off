@@ -1,0 +1,25 @@
+#!/bin/bash
+# td-sudo-off — disable passwordless sudo for the three trade-desk systemd units.
+#
+# Removes /etc/sudoers.d/trade-desk (the live drop-in), leaving the canonical
+# template at /etc/trade-desk/sudoers untouched. Also cancels any pending
+# auto-off timer from a prior td-sudo-on call.
+#
+# Installed to /usr/local/bin/td-sudo-off by deployment/scripts/td-sudo-install.sh.
+# Source of truth lives in the repo at deployment/scripts/td-sudo-off.
+set -euo pipefail
+
+if [[ $EUID -ne 0 ]]; then
+  exec sudo -- "$0" "$@"
+fi
+
+DST=/etc/sudoers.d/trade-desk
+if [[ -f "$DST" ]]; then
+  rm -f "$DST"
+  echo "[td-sudo] DISABLED (removed $DST)"
+else
+  echo "[td-sudo] already disabled"
+fi
+
+systemctl stop td-sudo-auto-off.timer td-sudo-auto-off.service 2>/dev/null || true
+systemctl reset-failed td-sudo-auto-off.timer td-sudo-auto-off.service 2>/dev/null || true

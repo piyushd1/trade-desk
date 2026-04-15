@@ -1,0 +1,53 @@
+# TradeDesk — scoped NOPASSWD sudoers drop-in
+#
+# Canonical location: deployment/sudoers/trade-desk (this file, in the repo).
+# Install target:     /etc/trade-desk/sudoers (template, inactive).
+# Live drop-in:       /etc/sudoers.d/trade-desk (created by td-sudo-on,
+#                     removed by td-sudo-off).
+#
+# Only these exact commands become passwordless. Everything else — including
+# `sudo reboot`, `sudo cp`, `sudo tee`, `sudo systemctl daemon-reload`, and
+# every other systemctl command on any other unit — still requires a password.
+#
+# Validated by visudo -c before being moved into /etc/sudoers.d/.
+#
+# To re-scope: edit this file, then run `sudo bash deployment/scripts/td-sudo-install.sh`
+# to reinstall the template at /etc/trade-desk/sudoers, then `td-sudo-off && td-sudo-on`
+# to swap the live drop-in.
+
+piyushdev ALL=(ALL) NOPASSWD: /usr/bin/systemctl enable --now trade-desk-migrate.service, \
+                              /usr/bin/systemctl enable --now trade-desk.service, \
+                              /usr/bin/systemctl enable --now trade-desk-tailscale-serve.service, \
+                              /usr/bin/systemctl disable --now trade-desk-migrate.service, \
+                              /usr/bin/systemctl disable --now trade-desk.service, \
+                              /usr/bin/systemctl disable --now trade-desk-tailscale-serve.service, \
+                              /usr/bin/systemctl start trade-desk-migrate.service, \
+                              /usr/bin/systemctl start trade-desk.service, \
+                              /usr/bin/systemctl start trade-desk-tailscale-serve.service, \
+                              /usr/bin/systemctl stop trade-desk-migrate.service, \
+                              /usr/bin/systemctl stop trade-desk.service, \
+                              /usr/bin/systemctl stop trade-desk-tailscale-serve.service, \
+                              /usr/bin/systemctl restart trade-desk-migrate.service, \
+                              /usr/bin/systemctl restart trade-desk.service, \
+                              /usr/bin/systemctl restart trade-desk-tailscale-serve.service, \
+                              /usr/bin/systemctl status trade-desk-migrate.service, \
+                              /usr/bin/systemctl status trade-desk.service, \
+                              /usr/bin/systemctl status trade-desk-tailscale-serve.service, \
+                              /bin/systemctl enable --now trade-desk-migrate.service, \
+                              /bin/systemctl enable --now trade-desk.service, \
+                              /bin/systemctl enable --now trade-desk-tailscale-serve.service, \
+                              /bin/systemctl disable --now trade-desk-migrate.service, \
+                              /bin/systemctl disable --now trade-desk.service, \
+                              /bin/systemctl disable --now trade-desk-tailscale-serve.service, \
+                              /bin/systemctl start trade-desk-migrate.service, \
+                              /bin/systemctl start trade-desk.service, \
+                              /bin/systemctl start trade-desk-tailscale-serve.service, \
+                              /bin/systemctl stop trade-desk-migrate.service, \
+                              /bin/systemctl stop trade-desk.service, \
+                              /bin/systemctl stop trade-desk-tailscale-serve.service, \
+                              /bin/systemctl restart trade-desk-migrate.service, \
+                              /bin/systemctl restart trade-desk.service, \
+                              /bin/systemctl restart trade-desk-tailscale-serve.service, \
+                              /bin/systemctl status trade-desk-migrate.service, \
+                              /bin/systemctl status trade-desk.service, \
+                              /bin/systemctl status trade-desk-tailscale-serve.service

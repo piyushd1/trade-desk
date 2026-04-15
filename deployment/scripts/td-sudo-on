@@ -1,0 +1,61 @@
+#!/bin/bash
+# td-sudo-on — enable passwordless sudo for the three trade-desk systemd units.
+#
+# Usage: td-sudo-on            # enable indefinitely, until td-sudo-off
+#        td-sudo-on MINUTES    # enable for N minutes (1–240), auto-off after
+#
+# Copies /etc/trade-desk/sudoers → /etc/sudoers.d/trade-desk. If MINUTES is
+# given, also schedules a transient systemd timer to run td-sudo-off when
+# the window expires. Only scoped commands become passwordless — everything
+# else still requires the password.
+#
+# Re-execs itself via sudo if not already root, so invoking it always requires
+# a password entry at a TTY. A non-interactive client cannot enable this.
+#
+# Installed to /usr/local/bin/td-sudo-on by deployment/scripts/td-sudo-install.sh.
+# Source of truth lives in the repo at deployment/scripts/td-sudo-on.
+set -euo pipefail
+
+if [[ $EUID -ne 0 ]]; then
+  exec sudo -- "$0" "$@"
+fi
+
+MINUTES="${1:-}"
+if [[ -n "$MINUTES" ]]; then
+  if ! [[ "$MINUTES" =~ ^[0-9]+$ ]] || (( MINUTES < 1 )) || (( MINUTES > 240 )); then
+    echo "Error: MINUTES must be an integer between 1 and 240 (or omit for indefinite)" >&2
+    exit 1
+  fi
+fi
+
+SRC=/etc/trade-desk/sudoers
+DST=/etc/sudoers.d/trade-desk
+
+if [[ ! -f "$SRC" ]]; then
+  echo "Error: sudoers template $SRC not found" >&2
+  echo "       Run 'sudo bash /home/piyushdev/trade-desk/deployment/scripts/td-sudo-install.sh' first" >&2
+  exit 1
+fi
+
+# Validate syntax before touching live sudoers
+if ! visudo -c -f "$SRC" >/dev/null; then
+  echo "Error: $SRC has sudoers syntax errors, refusing to install" >&2
+  exit 1
+fi
+
+install -m 0440 -o root -g root "$SRC" "$DST"
+
+# Cancel any pre-existing auto-off timer from a previous td-sudo-on invocation
+systemctl stop td-sudo-auto-off.timer td-sudo-auto-off.service 2>/dev/null || true
+systemctl reset-failed td-sudo-auto-off.timer td-sudo-auto-off.service 2>/dev/null || true
+
+if [[ -n "$MINUTES" ]]; then
+  # Schedule auto-off via a transient systemd timer
+  systemd-run --quiet --on-active="${MINUTES}m" --unit=td-sudo-auto-off \
+    /usr/local/bin/td-sudo-off >/dev/null
+  echo "[td-sudo] ENABLED for ${MINUTES} minutes (auto-off scheduled)"
+else
+  echo "[td-sudo] ENABLED indefinitely (no auto-off — remember to run td-sudo-off when done)"
+fi
+echo "[td-sudo] Scoped: trade-desk-migrate / trade-desk / trade-desk-tailscale-serve"
+echo "[td-sudo] Run 'td-sudo-off' to disable immediately."

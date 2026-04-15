@@ -38,8 +38,14 @@ RUN apt-get update && apt-get install -y \
 # Copy application code
 COPY backend/ .
 
-# Create necessary directories
-RUN mkdir -p logs && \
+# Create necessary directories INCLUDING /app/data so fresh Docker named
+# volumes inherit correct ownership from the image. Without `data` in this
+# mkdir, Docker creates the volume mount point as root when tradedesk-data
+# first mounts over /app/data, and the backend container (running as the
+# non-root `tradedesk` user) can't open the SQLite file. With `data` in the
+# mkdir, the image already has an empty, tradedesk-owned /app/data directory,
+# and Docker copies that into the fresh volume on first mount.
+RUN mkdir -p logs data && \
     chown -R tradedesk:tradedesk /app
 
 # Switch to non-root user
