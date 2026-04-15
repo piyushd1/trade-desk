@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { riskApi, healthApi } from "@/lib/api";
+import { riskApi } from "@/lib/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle } from "lucide-react";
@@ -34,13 +34,6 @@ export default function DashboardPage() {
     queryFn: () => riskApi.getStatus(user?.id),
     refetchInterval: 30000, // Refetch every 30 seconds
     enabled: user?.id !== undefined,
-  });
-
-  // Fetch health
-  const { data: health } = useQuery({
-    queryKey: ["health"],
-    queryFn: healthApi.check,
-    refetchInterval: 60000,
   });
 
   const metrics = riskStatus?.daily_metrics;
