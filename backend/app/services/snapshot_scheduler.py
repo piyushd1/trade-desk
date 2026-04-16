@@ -47,8 +47,11 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
+from starlette.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
+from kiteconnect import KiteConnect
 
+from app.config import settings
 from app.database import AsyncSessionLocal
 from app.models.broker_session import BrokerSession
 from app.models.portfolio_snapshot import PortfolioSnapshot
@@ -436,34 +439,56 @@ class SnapshotScheduler:
         margins_or_funds: Dict[str, Any] = {}
 
         if session.broker == "zerodha":
-            # The Zerodha service uses a shared KiteConnect instance with
-            # an explicit set_access_token call. Respect that pattern
-            # even though it's mildly stateful.
-            zerodha_service.set_access_token(access_token)
-            h_resp = zerodha_service.get_holdings()
-            p_resp = zerodha_service.get_positions()
-            m_resp = zerodha_service.get_margins()
-            if h_resp.get("status") == "success":
-                holdings = h_resp.get("data") or []
-            if p_resp.get("status") == "success":
-                positions = p_resp.get("data") or {"net": [], "day": []}
-            if m_resp.get("status") == "success":
-                margins_or_funds = m_resp.get("data") or {}
+            # To avoid race conditions on a shared singleton, instantiate
+            # a local KiteConnect client for this specific capture task.
+            # This ensures that set_access_token does not contaminate
+            # concurrent snapshot captures for other users/sessions.
+            kite = KiteConnect(api_key=settings.ZERODHA_API_KEY)
+            kite.set_access_token(access_token)
+
+            # Parallelize synchronous Zerodha API calls using run_in_threadpool
+            h_resp_data, p_resp_data, m_resp_data = await asyncio.gather(
+                run_in_threadpool(kite.holdings),
+                run_in_threadpool(kite.positions),
+                run_in_threadpool(kite.margins),
+                return_exceptions=True,
+            )
+
+            # Handle potential exceptions from parallel calls
+            holdings = h_resp_data if not isinstance(h_resp_data, Exception) else []
+            positions = p_resp_data if not isinstance(p_resp_data, Exception) else {"net": [], "day": []}
+            margins_or_funds = m_resp_data if not isinstance(m_resp_data, Exception) else {}
+
+            # Log errors if any call failed
+            for resp, label in [(h_resp_data, "holdings"), (p_resp_data, "positions"), (m_resp_data, "margins")]:
+                if isinstance(resp, Exception):
+                    logger.error(f"Zerodha API error ({label}) for session {session.id}: {resp}")
 
             total_value, total_pnl, realized, unrealized = _compute_zerodha_totals(
                 holdings, positions, margins_or_funds
             )
 
         elif session.broker == "indstocks":
-            h_resp = await indstocks_service.get_holdings(access_token=access_token)
-            p_resp = await indstocks_service.get_positions(access_token=access_token)
-            m_resp = await indstocks_service.get_margins(access_token=access_token)
-            if h_resp.get("status") == "success":
+            # IndStocks service calls are already async, so we can gather them
+            # directly to parallelize the requests.
+            h_resp, p_resp, m_resp = await asyncio.gather(
+                indstocks_service.get_holdings(access_token=access_token),
+                indstocks_service.get_positions(access_token=access_token),
+                indstocks_service.get_margins(access_token=access_token),
+                return_exceptions=True,
+            )
+
+            if not isinstance(h_resp, Exception) and h_resp.get("status") == "success":
                 holdings = h_resp.get("data") or []
-            if p_resp.get("status") == "success":
+            if not isinstance(p_resp, Exception) and p_resp.get("status") == "success":
                 positions = p_resp.get("data") or {"net": [], "day": []}
-            if m_resp.get("status") == "success":
+            if not isinstance(m_resp, Exception) and m_resp.get("status") == "success":
                 margins_or_funds = m_resp.get("data") or {}
+
+            # Log errors if any call failed
+            for resp, label in [(h_resp, "holdings"), (p_resp, "positions"), (m_resp, "margins")]:
+                if isinstance(resp, Exception):
+                    logger.error(f"IndStocks API error ({label}) for session {session.id}: {resp}")
 
             total_value, total_pnl, realized, unrealized = _compute_indstocks_totals(
                 holdings, positions, margins_or_funds
