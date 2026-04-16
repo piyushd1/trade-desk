@@ -5,7 +5,7 @@ Fetches and stores fundamental data from Yahoo Finance.
 Implements caching, rate limiting, and error handling.
 """
 
-from typing import Dict, Optional, List, Any
+from typing import Dict, Optional, List, Any, Union
 from datetime import datetime, date, timezone, timedelta
 from decimal import Decimal
 import logging
@@ -55,7 +55,9 @@ class FundamentalsService:
         )
         logger.info("FundamentalsService initialized with cached rate-limited session")
     
-    def _safe_decimal(self, value: Any, precision: int = 2) -> Optional[Decimal]:
+    def _safe_decimal(
+        self, value: Union[int, float, str, Decimal, None], precision: int = 2
+    ) -> Optional[Decimal]:
         """Safely convert value to Decimal."""
         if value is None or value == "":
             return None
@@ -65,17 +67,17 @@ class FundamentalsService:
             return Decimal(str(value))
         except (ValueError, TypeError, ArithmeticError):
             return None
-    
-    def _safe_int(self, value: Any) -> Optional[int]:
+
+    def _safe_int(self, value: Union[int, float, str, None]) -> Optional[int]:
         """Safely convert value to int."""
         if value is None or value == "":
             return None
         try:
-            return int(value)
+            return int(float(value)) if isinstance(value, str) and "." in value else int(value)
         except (ValueError, TypeError):
             return None
-    
-    def _safe_date(self, value: Any) -> Optional[date]:
+
+    def _safe_date(self, value: Union[datetime, date, str, None]) -> Optional[date]:
         """Safely convert value to date."""
         if value is None:
             return None
@@ -112,7 +114,7 @@ class FundamentalsService:
         age = datetime.now(timezone.utc) - fundamentals.updated_at.replace(tzinfo=timezone.utc)
         return age.total_seconds() < (self.cache_ttl_hours * 3600)
     
-    def _extract_fundamentals_from_info(self, info: Dict, instrument_token: int) -> Dict:
+    def _extract_fundamentals_from_info(self, info: Dict[str, Any], instrument_token: int) -> Dict[str, Any]:
         """
         Extract fundamental data from yfinance info dict.
         
@@ -173,7 +175,7 @@ class FundamentalsService:
             "data_date": date.today(),
         }
     
-    def _extract_analyst_data(self, ticker: yf.Ticker, instrument_token: int) -> Optional[Dict]:
+    def _extract_analyst_data(self, ticker: yf.Ticker, instrument_token: int) -> Optional[Dict[str, Any]]:
         """
         Extract analyst data from yfinance Ticker object.
         
@@ -261,7 +263,7 @@ class FundamentalsService:
         self,
         yfinance_symbol: str,
         instrument_token: int
-    ) -> Optional[Dict]:
+    ) -> Optional[Dict[str, Any]]:
         """
         Fetch fundamental data from Yahoo Finance.
         
@@ -296,7 +298,7 @@ class FundamentalsService:
             logger.error(f"Error fetching fundamentals for {yfinance_symbol}: {e}")
             return None
     
-    async def store_fundamentals(self, fundamentals_data: Dict) -> Optional[StockFundamentals]:
+    async def store_fundamentals(self, fundamentals_data: Dict[str, Any]) -> Optional[StockFundamentals]:
         """
         Store fundamental data in database (upsert).
         
@@ -441,7 +443,7 @@ class FundamentalsService:
         self,
         instrument_tokens: List[int],
         include_analyst: bool = False
-    ) -> Dict:
+    ) -> Dict[str, int]:
         """
         Fetch fundamentals for multiple instruments.
         
