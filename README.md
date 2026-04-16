@@ -66,30 +66,13 @@ It covers the full end-to-end: first-time Pi setup, Tailscale + Docker install, 
 
 ## 📚 Documentation
 
-### How to run this
+### Operations
 - **[Deployment Guide](docs/DEPLOYMENT.md)** — authoritative runbook for Pi production deployment
-- **[Pi Deployment Handoff State](docs/plans/HANDOFF-2026-04-15.md)** — current state, discovered gotchas, commits
-- **[Active plan](docs/plans/2026-04-15-pi-deployment-plan.md)** — original phased deployment plan (Phase 1)
-
-### Core documentation
-- **[Setup Instructions](SETUP_INSTRUCTIONS.md)** — legacy bare-metal setup guide
-- **[Quick Start Guide](QUICK_START.md)** — legacy quick start
-- **[Security Guide](SECURITY.md)** — security best practices
-- **[Testing Guide](TESTING.md)** — testing documentation
-- **[Master Reference](MASTER_REFERENCE.md)** — complete reference guide
+- **[Session Handoff](docs/plans/HANDOFF-2026-04-15.md)** — current state, discovered gotchas, what to pick up next
+- **[Deployment Plan](docs/plans/2026-04-15-pi-deployment-plan.md)** — original phased deployment plan (Stages 1-3 reference)
 
 ### Planning & architecture
-- **[Master PRD](docs/MASTER_PRD.md)** — product requirements
-- **[Executive Summary](docs/01_EXECUTIVE_SUMMARY.md)** — project overview
-- **[Compliance Requirements](docs/02_COMPLIANCE_REQUIREMENTS.md)** — SEBI compliance
-- **[Technical Architecture](docs/03_TECHNICAL_ARCHITECTURE.md)** — system design
-- **[Feature Specifications](docs/04_FEATURE_SPECIFICATIONS.md)** — detailed features
-- **[Data Management](docs/05_DATA_MANAGEMENT.md)** — data handling
-- **[Risk Management](docs/06_RISK_MANAGEMENT.md)** — risk controls
-- **[Technical Analysis](docs/09_TECHNICAL_ANALYSIS.md)** — technical indicators guide
-- **[Fundamentals](docs/10_FUNDAMENTALS.md)** — fundamental data guide
-- **[Implementation Plan](docs/07_IMPLEMENTATION_PLAN.md)** — development roadmap
-- **[Testing Strategy](docs/08_TESTING_STRATEGY.md)** — QA approach
+- **[Master PRD](docs/MASTER_PRD.md)** — product requirements, SEBI compliance, technical architecture, feature specs, risk management, data management, implementation plan (docs/01-10)
 
 ---
 
@@ -397,10 +380,8 @@ Private - All Rights Reserved
 ## 📞 Support
 
 For issues or questions:
-- Check [Documentation](docs/)
-- Review [Testing Guide](TESTING.md)
-- See [Setup Instructions](SETUP_INSTRUCTIONS.md)
-- Review [Security Guide](SECURITY.md) for best practices
+- Check [Deployment Guide](docs/DEPLOYMENT.md) for operational runbook
+- Check [Session Handoff](docs/plans/HANDOFF-2026-04-15.md) for current state
 
 ---
 
