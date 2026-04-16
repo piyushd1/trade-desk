@@ -5,7 +5,7 @@ Fetches and stores fundamental data from Yahoo Finance.
 Implements caching, rate limiting, and error handling.
 """
 
-from typing import Dict, Optional, List, Any, Union
+from typing import Dict, Optional, List, Any
 from datetime import datetime, date, timezone, timedelta
 from decimal import Decimal
 import logging
@@ -55,9 +55,7 @@ class FundamentalsService:
         )
         logger.info("FundamentalsService initialized with cached rate-limited session")
     
-    def _safe_decimal(
-        self, value: Union[int, float, str, Decimal, None], precision: int = 2
-    ) -> Optional[Decimal]:
+    def _safe_decimal(self, value: Any, precision: int = 2) -> Optional[Decimal]:
         """Safely convert value to Decimal."""
         if value is None or value == "":
             return None
@@ -68,16 +66,16 @@ class FundamentalsService:
         except (ValueError, TypeError, ArithmeticError):
             return None
 
-    def _safe_int(self, value: Union[int, float, str, None]) -> Optional[int]:
+    def _safe_int(self, value: Any) -> Optional[int]:
         """Safely convert value to int."""
         if value is None or value == "":
             return None
         try:
-            return int(float(value)) if isinstance(value, str) and "." in value else int(value)
+            return int(value)
         except (ValueError, TypeError):
             return None
 
-    def _safe_date(self, value: Union[datetime, date, str, None]) -> Optional[date]:
+    def _safe_date(self, value: Any) -> Optional[date]:
         """Safely convert value to date."""
         if value is None:
             return None
