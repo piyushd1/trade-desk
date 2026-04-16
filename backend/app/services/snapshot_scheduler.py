@@ -47,6 +47,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
+from starlette.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import AsyncSessionLocal
@@ -440,9 +441,14 @@ class SnapshotScheduler:
             # an explicit set_access_token call. Respect that pattern
             # even though it's mildly stateful.
             zerodha_service.set_access_token(access_token)
-            h_resp = zerodha_service.get_holdings()
-            p_resp = zerodha_service.get_positions()
-            m_resp = zerodha_service.get_margins()
+
+            # Parallelize synchronous Zerodha API calls using run_in_threadpool
+            h_resp, p_resp, m_resp = await asyncio.gather(
+                run_in_threadpool(zerodha_service.get_holdings),
+                run_in_threadpool(zerodha_service.get_positions),
+                run_in_threadpool(zerodha_service.get_margins),
+            )
+
             if h_resp.get("status") == "success":
                 holdings = h_resp.get("data") or []
             if p_resp.get("status") == "success":
