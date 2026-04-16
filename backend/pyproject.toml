@@ -4,7 +4,6 @@ version = "1.0.0"
 description = "SEBI-compliant algorithmic trading platform backend"
 authors = ["TradeDesk Team"]
 readme = "README.md"
-python = "^3.10"
 
 [tool.poetry.dependencies]
 python = "^3.10"

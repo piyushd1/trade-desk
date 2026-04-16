@@ -11,7 +11,7 @@ from typing import AsyncGenerator, Generator
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -21,6 +21,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from app.config import settings
 from app.database import Base, get_db
 from app.main import app
+from app.models import User
+from app.models.user import UserRole
+from app.services.auth_service import auth_service
 
 # Test database URL - loaded from environment variables or use in-memory SQLite
 TEST_DATABASE_URL = settings.TEST_DATABASE_URL
@@ -120,10 +123,32 @@ def client(test_sync_db) -> Generator[TestClient, None, None]:
 
 
 @pytest.fixture
-def auth_headers():
+def auth_headers(test_sync_db, sample_user_data):
     """Create authentication headers for testing."""
-    # TODO: Implement JWT token generation for tests
-    return {"Authorization": "Bearer test-token"}
+    # Ensure test user exists in the database
+    username = sample_user_data["username"]
+    result = test_sync_db.execute(select(User).where(User.username == username))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        user = User(
+            username=username,
+            email=sample_user_data["email"],
+            password_hash=auth_service.hash_password(sample_user_data["password"]),
+            full_name=sample_user_data["full_name"],
+            role=UserRole.TRADER,
+            is_active=True,
+        )
+        test_sync_db.add(user)
+        test_sync_db.commit()
+        test_sync_db.refresh(user)
+
+    # Create JWT token
+    token = auth_service.create_access_token(
+        data={"sub": user.username, "user_id": user.id, "role": user.role.value}
+    )
+
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
