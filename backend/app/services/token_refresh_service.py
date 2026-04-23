@@ -133,7 +133,7 @@ class TokenRefreshService:
                 )
                 
                 logger.info(
-                    f"✅ Successfully refreshed token for user: {broker_session.user_identifier}, "
+                    f"✅ Successfully refreshed token for session: {broker_session.id}, "
                     f"expires at: {refreshed_session.expires_at}"
                 )
                 
@@ -144,7 +144,7 @@ class TokenRefreshService:
                 }
         
         except Exception as e:
-            logger.error(f"❌ Error refreshing session for {broker_session.user_identifier}: {e}")
+            logger.error(f"❌ Error refreshing session for {broker_session.id}: {e}")
             
             # Mark session as expired on error
             try:
